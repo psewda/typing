@@ -8,6 +8,7 @@ go:
 
 install:
   - go mod download -x
+  - make install-ginkgo
 
 script:
   - make all

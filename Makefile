@@ -16,7 +16,13 @@ build-windows:
 
 build: build-linux build-windows
 
-all: build
+test:
+	ginkgo ./...
+
+install-ginkgo:
+	go get -v github.com/onsi/ginkgo/ginkgo@v1.14.2
+
+all: build test
 
 run:
 	go run $(SERVER)
