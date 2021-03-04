@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/psewda/typing"
+	"github.com/psewda/typing/pkg/controllers"
 	"github.com/psewda/typing/pkg/log"
 	"github.com/psewda/typing/pkg/server"
 )
@@ -61,13 +61,16 @@ func init() {
 func main() {
 	// if --version is passed, print version string
 	if verFlag {
-		verStr := buildVerStr(typing.Version, typing.BuildNumber)
+		verStr := typing.GetVersionString()
 		fmt.Println(verStr)
 		return
 	}
 
 	// create new api server
 	server := server.New(true, logger)
+
+	// register api controllers
+	server.RegisterController(controllers.NewVersionController())
 
 	// run the api server
 	if err := server.Run(port); err != nil {
@@ -118,9 +121,4 @@ func parseLogLevel(level string) (log.LevelType, bool) {
 	default:
 		return 255, false
 	}
-}
-
-func buildVerStr(ver, build string) string {
-	osArch := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
-	return fmt.Sprintf("Typing %s-%s %s", ver, build, osArch)
 }
