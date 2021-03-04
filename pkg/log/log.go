@@ -98,8 +98,10 @@ func New(config Configuration) *Logger {
 	if config.Output != nil {
 		logr.SetOutput(config.Output)
 	}
-	if config.Color {
-		logr.EnableColor()
+
+	logr.EnableColor()
+	if !config.Color {
+		logr.DisableColor()
 	}
 
 	return &Logger{

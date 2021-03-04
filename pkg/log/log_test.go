@@ -21,7 +21,7 @@ var _ = Describe("logger", func() {
 	Context("log format", func() {
 		It("should log in correct format", func() {
 			buffer := new(bytes.Buffer)
-			logger := newLogger(buffer, log.LevelTypeDebug)
+			logger := newLogger(buffer, log.LevelTypeDebug, false)
 
 			By("json format")
 			logger.Debug("debug")
@@ -38,7 +38,7 @@ var _ = Describe("logger", func() {
 	Context("log content", func() {
 		It("should log correct content", func() {
 			buffer := new(bytes.Buffer)
-			logger := newLogger(buffer, log.LevelTypeDebug)
+			logger := newLogger(buffer, log.LevelTypeDebug, false)
 
 			By("content")
 			logger.Debug("debug")
@@ -57,7 +57,7 @@ var _ = Describe("logger", func() {
 			buffer := new(bytes.Buffer)
 
 			By("debug level")
-			logger := newLogger(buffer, log.LevelTypeDebug)
+			logger := newLogger(buffer, log.LevelTypeDebug, false)
 			writeAll(logger)
 			Expect(buffer.String()).Should(ContainSubstring(`"level":"DEBUG"`))
 			Expect(buffer.String()).Should(ContainSubstring(`"level":"INFO"`))
@@ -65,7 +65,7 @@ var _ = Describe("logger", func() {
 			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
 
 			By("info level")
-			logger = newLogger(buffer, log.LevelTypeInfo)
+			logger = newLogger(buffer, log.LevelTypeInfo, false)
 			buffer.Reset()
 			writeAll(logger)
 			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
@@ -74,7 +74,7 @@ var _ = Describe("logger", func() {
 			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
 
 			By("warn level")
-			logger = newLogger(buffer, log.LevelTypeWarn)
+			logger = newLogger(buffer, log.LevelTypeWarn, false)
 			buffer.Reset()
 			writeAll(logger)
 			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
@@ -83,7 +83,7 @@ var _ = Describe("logger", func() {
 			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
 
 			By("error level")
-			logger = newLogger(buffer, log.LevelTypeError)
+			logger = newLogger(buffer, log.LevelTypeError, false)
 			buffer.Reset()
 			writeAll(logger)
 			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
@@ -93,13 +93,30 @@ var _ = Describe("logger", func() {
 		})
 	})
 
+	Context("log color", func() {
+		It("should enable/disable color", func() {
+			buffer := new(bytes.Buffer)
+			colorValue := "["
+
+			By("enable color")
+			logger := newLogger(buffer, log.LevelTypeDebug, true)
+			logger.Debug("debug")
+			Expect(buffer.String()).Should(ContainSubstring(colorValue))
+
+			By("disable color")
+			logger = newLogger(buffer, log.LevelTypeDebug, false)
+			buffer.Reset()
+			logger.Debug("debug")
+			Expect(buffer.String()).ShouldNot(ContainSubstring(colorValue))
+		})
+	})
 })
 
-func newLogger(w io.Writer, level log.LevelType) *log.Logger {
+func newLogger(w io.Writer, level log.LevelType, color bool) *log.Logger {
 	return log.New(log.Configuration{
 		Output: w,
-		Color:  false,
 		Level:  level,
+		Color:  color,
 	})
 }
 
