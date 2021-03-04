@@ -1,0 +1,38 @@
+run:
+  timeout: 2m
+
+linters:
+  disable-all: true
+  enable:
+    - golint
+    - govet
+    - gofmt 
+    - gosimple
+    - misspell
+    - errcheck
+    - gocyclo
+    - gocritic
+    - gosec
+    - deadcode
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gofmt:
+    simplify: true
+  errcheck:
+    check-blank: false
+  gocyclo:
+    min-complexity: 15
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  include:
+    - EXC0002 # golint: enable mandatory comments for exported type
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
