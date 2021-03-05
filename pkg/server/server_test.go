@@ -23,26 +23,32 @@ var _ = Describe("server", func() {
 			logger := newLogger()
 
 			By("valid port")
-			s := server.New(false, logger)
-			err := s.Run(server.GetRandPort())
-			defer s.Shutdown()
-			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(s.Running).Should(BeTrue())
+			{
+				s := server.New(false, logger)
+				err := s.Run(server.GetRandPort())
+				defer s.Shutdown()
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(s.Running).Should(BeTrue())
+			}
 
 			By("invalid port")
-			s = server.New(false, logger)
-			err = s.Run(25)
-			Expect(err).Should(HaveOccurred())
-			Expect(s.Running).Should(BeFalse())
+			{
+				s := server.New(false, logger)
+				err := s.Run(25)
+				Expect(err).Should(HaveOccurred())
+				Expect(s.Running).Should(BeFalse())
+			}
 
 			By("non-free port")
-			s = server.New(false, logger)
-			s.Run(5500)
-			defer s.Shutdown()
-			s2 := server.New(false, logger)
-			err = s2.Run(5500)
-			Expect(err).Should(HaveOccurred())
-			Expect(s2.Running).Should(BeFalse())
+			{
+				s := server.New(false, logger)
+				s.Run(5500)
+				defer s.Shutdown()
+				s2 := server.New(false, logger)
+				err := s2.Run(5500)
+				Expect(err).Should(HaveOccurred())
+				Expect(s2.Running).Should(BeFalse())
+			}
 		})
 	})
 

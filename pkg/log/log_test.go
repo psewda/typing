@@ -24,14 +24,18 @@ var _ = Describe("logger", func() {
 			logger := newLogger(buffer, log.LevelTypeDebug, false)
 
 			By("json format")
-			logger.Debug("debug")
-			Expect(buffer.String()).Should(HavePrefix("{"))
-			Expect(buffer.String()).Should(HaveSuffix("}\n"))
+			{
+				logger.Debug("debug")
+				Expect(buffer.String()).Should(HavePrefix("{"))
+				Expect(buffer.String()).Should(HaveSuffix("}\n"))
+			}
 
 			By("only 3 fields")
-			buffer.Reset()
-			logger.Debug("debug")
-			Expect(strings.Split(buffer.String(), ",")).Should(HaveLen(3))
+			{
+				buffer.Reset()
+				logger.Debug("debug")
+				Expect(strings.Split(buffer.String(), ",")).Should(HaveLen(3))
+			}
 		})
 	})
 
@@ -40,7 +44,6 @@ var _ = Describe("logger", func() {
 			buffer := new(bytes.Buffer)
 			logger := newLogger(buffer, log.LevelTypeDebug, false)
 
-			By("content")
 			logger.Debug("debug")
 			logger.Info("info")
 			logger.Warn("warn")
@@ -57,57 +60,69 @@ var _ = Describe("logger", func() {
 			buffer := new(bytes.Buffer)
 
 			By("debug level")
-			logger := newLogger(buffer, log.LevelTypeDebug, false)
-			writeAll(logger)
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"DEBUG"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"INFO"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			{
+				logger := newLogger(buffer, log.LevelTypeDebug, false)
+				writeAll(logger)
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"DEBUG"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"INFO"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			}
 
 			By("info level")
-			logger = newLogger(buffer, log.LevelTypeInfo, false)
-			buffer.Reset()
-			writeAll(logger)
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"INFO"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			{
+				logger := newLogger(buffer, log.LevelTypeInfo, false)
+				buffer.Reset()
+				writeAll(logger)
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"INFO"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			}
 
 			By("warn level")
-			logger = newLogger(buffer, log.LevelTypeWarn, false)
-			buffer.Reset()
-			writeAll(logger)
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"INFO"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			{
+				logger := newLogger(buffer, log.LevelTypeWarn, false)
+				buffer.Reset()
+				writeAll(logger)
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"INFO"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"WARN"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			}
 
 			By("error level")
-			logger = newLogger(buffer, log.LevelTypeError, false)
-			buffer.Reset()
-			writeAll(logger)
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"INFO"`))
-			Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"WARN"`))
-			Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			{
+				logger := newLogger(buffer, log.LevelTypeError, false)
+				buffer.Reset()
+				writeAll(logger)
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"DEBUG"`))
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"INFO"`))
+				Expect(buffer.String()).ShouldNot(ContainSubstring(`"level":"WARN"`))
+				Expect(buffer.String()).Should(ContainSubstring(`"level":"ERROR"`))
+			}
 		})
 	})
 
 	Context("log color", func() {
 		It("should enable/disable color", func() {
 			buffer := new(bytes.Buffer)
-			colorValue := "["
+			const colorValue = "["
 
 			By("enable color")
-			logger := newLogger(buffer, log.LevelTypeDebug, true)
-			logger.Debug("debug")
-			Expect(buffer.String()).Should(ContainSubstring(colorValue))
+			{
+				logger := newLogger(buffer, log.LevelTypeDebug, true)
+				logger.Debug("debug")
+				Expect(buffer.String()).Should(ContainSubstring(colorValue))
+			}
 
 			By("disable color")
-			logger = newLogger(buffer, log.LevelTypeDebug, false)
-			buffer.Reset()
-			logger.Debug("debug")
-			Expect(buffer.String()).ShouldNot(ContainSubstring(colorValue))
+			{
+				logger := newLogger(buffer, log.LevelTypeDebug, false)
+				buffer.Reset()
+				logger.Debug("debug")
+				Expect(buffer.String()).ShouldNot(ContainSubstring(colorValue))
+			}
 		})
 	})
 })
