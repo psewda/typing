@@ -31,5 +31,8 @@ install-ginkgo:
 install-golangci-lint:
 	curl -sSfL $(LINT_INSTALL_SCRIPT) | sh -s -- -b $(shell go env GOPATH)/bin v1.35.2
 
+install-mockgen:
+	GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4
+
 run:
 	go run $(SERVER)

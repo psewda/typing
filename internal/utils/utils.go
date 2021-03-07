@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 )
 
 const (
@@ -31,4 +33,20 @@ func AppendError(value string, err error) string {
 		return fmt.Sprintf("%s: [%s]", value, err.Error())
 	}
 	return value
+}
+
+// CheckLocalhostURL validates the url. The url must be a valid and localhost url.
+func CheckLocalhostURL(u string) error {
+	url, err := url.Parse(u)
+	if err != nil {
+		msg := fmt.Sprintf("the url '%s' is invalid, parsing error", u)
+		return Error(msg, err)
+	}
+
+	host := strings.ToLower(url.Host)
+	if !strings.Contains(host, "localhost") {
+		msg := fmt.Sprintf("the url '%s' must be a localhost url", u)
+		return errors.New(msg)
+	}
+	return nil
 }

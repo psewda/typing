@@ -3,29 +3,37 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 
 	"github.com/psewda/typing"
+	"github.com/psewda/typing/internal/utils"
 	"github.com/psewda/typing/pkg/controllers"
+	ctrlv1 "github.com/psewda/typing/pkg/controllers/v1"
+	"github.com/psewda/typing/pkg/di"
 	"github.com/psewda/typing/pkg/log"
 	"github.com/psewda/typing/pkg/server"
+	"github.com/psewda/typing/pkg/signin/auth/googleauth"
 )
 
 const (
-	envVarPort       = "TYPING_PORT"
-	envVarLogLevel   = "TYPING_LOG_LEVEL"
-	buildTypeDebug   = "DEBUG"
-	buildTypeRelease = "RELEASE"
+	envVarPort            = "TYPING_PORT"
+	envVarLogLevel        = "TYPING_LOG_LEVEL"
+	envVarClientCred      = "TYPING_CLIENT_CRED"
+	buildTypeDebug        = "DEBUG"
+	buildTypeRelease      = "RELEASE"
+	defaultClientCredFile = "/etc/typing/google_client_cred.json"
 )
 
 var (
-	build   string = buildTypeDebug
-	port    uint16
-	logger  *log.Logger
-	verFlag bool
+	build      string = buildTypeDebug
+	port       uint16
+	clientCred []byte
+	logger     *log.Logger
+	verFlag    bool
 )
 
 func init() {
@@ -50,6 +58,14 @@ func init() {
 	}
 	logger = log.New(config)
 
+	// read google client credential
+	credFile := utils.GetValueString(os.Getenv(envVarClientCred), defaultClientCredFile)
+	cred, err := ioutil.ReadFile(credFile)
+	if err != nil {
+		logger.Fatal("error occurred while reading google client cred file", err)
+	}
+	clientCred = cred
+
 	// set port for server
 	p, ok := parsePort(os.Getenv(envVarPort))
 	if !ok {
@@ -69,8 +85,16 @@ func main() {
 	// create new api server
 	server := server.New(true, logger)
 
+	// setup handlers for creating new type instances
+	aufn := func(params ...interface{}) (interface{}, error) {
+		return googleauth.New(clientCred)
+	}
+	container := di.New()
+	container.Add(di.InstanceTypeAuth, aufn)
+
 	// register api controllers
 	server.RegisterController(controllers.NewVersionController())
+	server.RegisterController(ctrlv1.NewAuthController(container))
 
 	// run the api server
 	if err := server.Run(port); err != nil {

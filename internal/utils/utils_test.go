@@ -50,4 +50,20 @@ var _ = Describe("utility functions", func() {
 			Expect(msg).Should(Equal("value"))
 		})
 	})
+
+	Context("utility function: CheckLocalhostURL()", func() {
+		It("should cover all cases", func() {
+			By("valid url")
+			err := utils.CheckLocalhostURL("http://localhost:5050/redirect")
+			Expect(err).ShouldNot(HaveOccurred())
+
+			By("wrong url")
+			err = utils.CheckLocalhostURL("invalid-value")
+			Expect(err).Should(HaveOccurred())
+
+			By("non localhost url")
+			err = utils.CheckLocalhostURL("http://example.com:5050/redirect")
+			Expect(err).Should(HaveOccurred())
+		})
+	})
 })
