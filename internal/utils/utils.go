@@ -1,16 +1,30 @@
 package utils
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 const (
 	// Empty is empty/blank string.
 	Empty = ""
 )
+
+// TransportFunc is used to customize the http client's transport
+// layer. User can inject a hook function to change the request and response params.
+type TransportFunc func(*http.Request) (*http.Response, error)
+
+// RoundTrip forwards the incoming http call to the used defined hook function.
+func (f TransportFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
 
 // GetValueString returns the specified value, but if the specified
 // value is empty, it returns the default value.
@@ -49,4 +63,31 @@ func CheckLocalhostURL(u string) error {
 		return errors.New(msg)
 	}
 	return nil
+}
+
+// ClientWithToken creates a new http client and injects
+// the access token in the authorization header.
+func ClientWithToken(accessToken string) *http.Client {
+	client := http.DefaultClient
+	original := http.DefaultTransport
+	client.Transport = TransportFunc(func(req *http.Request) (*http.Response, error) {
+		req.Header.Add(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", accessToken))
+		return original.RoundTrip(req)
+	})
+	return client
+}
+
+// ClientWithJSON creates a new http client. It has an internal transport
+// function which build custom response with the specified json and
+// http status code. It is useful for testing http calls.
+func ClientWithJSON(j string, code int) *http.Client {
+	client := http.DefaultClient
+	client.Transport = TransportFunc(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: code,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(j)),
+			Header:     map[string][]string{"Content-Type": {"application/json"}},
+		}, nil
+	})
+	return client
 }

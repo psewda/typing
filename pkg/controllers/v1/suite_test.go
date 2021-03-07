@@ -18,6 +18,7 @@ const (
 	tokenRoute   = "/api/v1/signin/auth/token"
 	refreshRoute = "/api/v1/signin/auth/refresh"
 	revokeRoute  = "/api/v1/signin/auth/revoke"
+	uiRoute      = "/api/v1/signin/userinfo"
 )
 
 var mockCtrl *gomock.Controller
@@ -53,6 +54,13 @@ func withContainer(v di.Container) keyValue {
 	return keyValue{
 		key:   middlewares.KeyContainer,
 		value: v,
+	}
+}
+
+func withAccessToken() keyValue {
+	return keyValue{
+		key:   middlewares.KeyAccessToken,
+		value: "access-token",
 	}
 }
 

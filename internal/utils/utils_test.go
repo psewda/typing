@@ -2,8 +2,13 @@ package utils_test
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/psewda/typing/internal/utils"
@@ -64,6 +69,44 @@ var _ = Describe("utility functions", func() {
 			By("non localhost url")
 			err = utils.CheckLocalhostURL("http://example.com:5050/redirect")
 			Expect(err).Should(HaveOccurred())
+		})
+	})
+
+	Context("utility function: ClientWithToken()", func() {
+		It("should cover all cases", func() {
+			const accessToken = "access-token"
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				headerValue := r.Header.Get(echo.HeaderAuthorization)
+				w.Write([]byte(headerValue))
+			}))
+			defer ts.Close()
+
+			client := utils.ClientWithToken(accessToken)
+			Expect(client).ShouldNot(BeNil())
+
+			res, err := client.Get(ts.URL)
+			Expect(err).ShouldNot(HaveOccurred())
+			defer res.Body.Close()
+
+			at, _ := ioutil.ReadAll(res.Body)
+			t := fmt.Sprintf("Bearer %s", accessToken)
+			Expect(string(at)).Should(Equal(t))
+		})
+	})
+
+	Context("utility function: ClientWithJSON", func() {
+		It("should cover all cases", func() {
+			j := `{"key": "value"}`
+			client := utils.ClientWithJSON(j, http.StatusCreated)
+			Expect(client).ShouldNot(BeNil())
+
+			res, err := client.Get("url")
+			Expect(err).ShouldNot(HaveOccurred())
+			defer res.Body.Close()
+
+			json, _ := ioutil.ReadAll(res.Body)
+			Expect(string(json)).Should(Equal(j))
+			Expect(res.StatusCode).Should(Equal(http.StatusCreated))
 		})
 	})
 })

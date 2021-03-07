@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/psewda/typing/pkg/log"
 	"github.com/psewda/typing/pkg/server"
 	"github.com/psewda/typing/pkg/signin/auth/googleauth"
+	"github.com/psewda/typing/pkg/signin/userinfo/googleuserinfo"
 )
 
 const (
@@ -89,12 +91,18 @@ func main() {
 	aufn := func(params ...interface{}) (interface{}, error) {
 		return googleauth.New(clientCred)
 	}
+	uifn := func(params ...interface{}) (interface{}, error) {
+		client := params[0].(*http.Client)
+		return googleuserinfo.New(client)
+	}
 	container := di.New()
 	container.Add(di.InstanceTypeAuth, aufn)
+	container.Add(di.InstanceTypeUserinfo, uifn)
 
 	// register api controllers
 	server.RegisterController(controllers.NewVersionController())
 	server.RegisterController(ctrlv1.NewAuthController(container))
+	server.RegisterController(ctrlv1.NewUserinfoController(container))
 
 	// run the api server
 	if err := server.Run(port); err != nil {
