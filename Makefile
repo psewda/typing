@@ -34,5 +34,11 @@ install-golangci-lint:
 install-mockgen:
 	GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4
 
+gen-mocks:
+	mockgen -destination=mocks/mock_container.go -package=mocks $(PKG)/pkg/di Container
+	mockgen -destination=mocks/mock_auth.go -package=mocks $(PKG)/pkg/signin/auth Auth
+	mockgen -destination=mocks/mock_userinfo.go -package=mocks $(PKG)/pkg/signin/userinfo Userinfo
+	mockgen -destination=mocks/mock_notestore.go -package=mocks $(PKG)/pkg/storage/notestore Notestore
+
 run:
 	go run $(SERVER)
