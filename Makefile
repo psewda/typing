@@ -42,3 +42,6 @@ gen-mocks:
 
 run:
 	go run $(SERVER)
+
+docker-build:
+	docker build -t psewda/typing:build .
