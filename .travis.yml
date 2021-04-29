@@ -1,10 +1,17 @@
 os: linux
 arch: amd64
 
+services:
+  - docker
+
 language: go
 go:
   - 1.15.x
   - master
+
+before_install:
+  curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+  sudo apt-get install -y nodejs
 
 install:
   - go mod download -x
