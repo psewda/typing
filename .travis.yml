@@ -10,8 +10,9 @@ go:
   - master
 
 before_install:
-  - curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-  - sudo apt-get install -y nodejs
+  - nvm install 14.16.1
+  - nvm use 14.16.1
+  - node --version
 
 install:
   - go mod download -x
