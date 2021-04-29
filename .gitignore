@@ -17,5 +17,8 @@
 # build output directory
 bin/
 
+# nodejs modules
+node_modules/
+
 # dependency directories (remove the comment below to include it)
 # vendor/

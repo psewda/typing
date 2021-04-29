@@ -23,7 +23,12 @@ test:
 lint:
 	golangci-lint run ./...
 
-all: lint build test
+all-slim: lint build test
+
+run-specs:
+	./ci/runspecs.sh
+
+all: all-slim run-specs
 
 install-ginkgo:
 	go get -v github.com/onsi/ginkgo/ginkgo@v1.14.2
@@ -42,6 +47,3 @@ gen-mocks:
 
 run:
 	go run $(SERVER)
-
-docker-build:
-	docker build -t psewda/typing:build .

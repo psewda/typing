@@ -10,6 +10,7 @@ install:
   - go mod download -x
   - make install-ginkgo
   - make install-golangci-lint
+  - npm install
 
 script:
   - make all
