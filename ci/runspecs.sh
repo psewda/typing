@@ -39,10 +39,11 @@ sed -i "s/{client_secret}/${GOOGLE_CLIENT_SECRET}/" /tmp/typing/google_client_cr
 docker run \
   --detach \
   --name=typing \
-  --publish 7070:7070 \
+  --publish 127.0.0.1:7070:7070 \
   --volume /tmp/typing/google_client_cred.json:/etc/typing/google_client_cred.json \
   --env REFRESH_TOKEN=$REFRESH_TOKEN \
   typing:latest
+docker ps
 
 # run specs
 trap cleanup EXIT
