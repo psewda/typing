@@ -20,14 +20,20 @@ if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
   exit 1
 fi
 
+# check if refresh token exported
+if [ -z "$REFRESH_TOKEN" ]; then
+  echo "error: refresh token is NOT exported"
+  exit 1
+fi
+
 # build the docker image
 docker build -t typing:latest .
 
 # update the google client cred file
 mkdir -p /tmp/typing
 cp ./ci/google_client_cred.json /tmp/typing/google_client_cred.json
-sed -i 's/{client_id}/${GOOGLE_CLIENT_ID}/' /tmp/typing/google_client_cred.json
-sed -i 's/{client_secret}/${GOOGLE_CLIENT_SECRET}/' /tmp/typing/google_client_cred.json
+sed -i "s/{client_id}/$GOOGLE_CLIENT_ID/" /tmp/typing/google_client_cred.json
+sed -i "s/{client_secret}/${GOOGLE_CLIENT_SECRET}/" /tmp/typing/google_client_cred.json
 
 # run the docker image in container
 docker run \
@@ -35,6 +41,7 @@ docker run \
   --name=typing \
   --publish 7070:7070 \
   --volume /tmp/typing/google_client_cred.json:/etc/typing/google_client_cred.json \
+  --env REFRESH_TOKEN=$REFRESH_TOKEN \
   typing:latest
 
 # run specs

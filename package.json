@@ -1,12 +1,15 @@
 {
-  "name": "typing-specs",
-  "version": "1.0.0",
-  "scripts": {
-    "test": "mocha specs"
-  },
-  "devDependencies": {
-    "chai": "^4.3.4",
-    "chai-http": "^4.3.0",
-    "mocha": "^8.3.2"
-  }
+	"name": "typing-specs",
+	"version": "1.0.0",
+	"scripts": {
+		"test": "mocha specs"
+	},
+	"devDependencies": {
+		"chai": "^4.3.4",
+		"got": "^11.8.2",
+		"mocha": "^8.3.2"
+	},
+	"mocha": {
+		"require": "./specs/global-fixture.js"
+	}
 }
