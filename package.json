@@ -10,6 +10,7 @@
 		"mocha": "^8.3.2"
 	},
 	"mocha": {
-		"require": "./specs/global-fixture.js"
+		"require": "./specs/global-fixture.js",
+		"color": "true"
 	}
 }

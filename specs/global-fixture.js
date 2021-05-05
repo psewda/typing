@@ -3,6 +3,12 @@ const got = require("got");
 const utils = require("./utils");
 
 exports.mochaGlobalSetup = async function () {
+	// handle "unhandled promise rejection" error
+	process.on("unhandledRejection", (error) => {
+		console.log("unhandled rejection:", error.message);
+		process.exit(1);
+	});
+
 	// refresh token
 	accessToken = await refreshToken(process.env.REFRESH_TOKEN);
 	console.log(
