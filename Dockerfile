@@ -7,10 +7,10 @@ ENV TYPING_PORT=7070
 RUN apk add --no-cache libc6-compat
 
 # copy the local binary into the container
-COPY ./bin/linux-amd64/typing /usr/local/typing
+COPY ./bin/linux-amd64/typing /usr/local/bin/typing
 
 # set entrypoint for the image
-ENTRYPOINT ["/usr/local/typing"]
+ENTRYPOINT ["/usr/local/bin/typing"]
 
 # expose the container port
 EXPOSE 7070
