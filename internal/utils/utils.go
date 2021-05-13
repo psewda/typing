@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10/non-standard/validators"
 	"github.com/labstack/echo/v4"
 )
 
@@ -90,4 +92,39 @@ func ClientWithJSON(j string, code int) *http.Client {
 		}, nil
 	})
 	return client
+}
+
+// ValidateStruct checks all validation rules on struct fields. It returns
+// error on any validation failure.
+func ValidateStruct(s interface{}, m map[string]string) error {
+	val := validator.New()
+	_ = val.RegisterValidation("notblank", validators.NotBlank)
+	err := val.Struct(s)
+	if err != nil {
+		errs := err.(validator.ValidationErrors)
+		return errors.New(translate(errs, m))
+	}
+	return nil
+}
+
+func translate(errs validator.ValidationErrors, m map[string]string) string {
+	getKey := func(e validator.FieldError) string {
+		field := strings.ToLower(e.Field())
+		tag := strings.ToLower(e.Tag())
+		if strings.Contains(field, "[") {
+			index := strings.Index(field, "[")
+			return fmt.Sprintf("%s.item.%s", field[0:index], tag)
+		}
+		return fmt.Sprintf("%s.%s", field, tag)
+	}
+
+	var msgs []string
+	for _, e := range errs {
+		key := getKey(e)
+		defmsg := fmt.Sprintf("validation for '%s' failed", key)
+		msg := GetValueString(m[key], defmsg)
+		msgs = append(msgs, msg)
+
+	}
+	return strings.Join(msgs, ", ")
 }

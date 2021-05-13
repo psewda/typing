@@ -109,4 +109,39 @@ var _ = Describe("utility functions", func() {
 			Expect(res.StatusCode).Should(Equal(http.StatusCreated))
 		})
 	})
+
+	Context("utility function: ValidateStruct", func() {
+		It("should cover all cases", func() {
+			type Value struct {
+				Name        string `json:"name,omitempty" validate:"required,notblank"`
+				Description string `json:"desc,omitempty" validate:"max=250"`
+			}
+
+			m := make(map[string]string)
+			m["name.required"] = "name is required field"
+			m["name.notblank"] = "name can't be empty value"
+			m["description.max"] = "desc must be less than 250 chars"
+
+			By("validation successful")
+			{
+				v := &Value{
+					Name:        "name",
+					Description: "desc",
+				}
+				err := utils.ValidateStruct(v, m)
+				Expect(err).ShouldNot(HaveOccurred())
+			}
+
+			By("validation error")
+			{
+				v := &Value{
+					Name:        utils.Empty,
+					Description: "desc",
+				}
+				err := utils.ValidateStruct(v, m)
+				Expect(err).Should(HaveOccurred())
+				Expect(err.Error()).Should(Equal("name is required field"))
+			}
+		})
+	})
 })

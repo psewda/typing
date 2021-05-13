@@ -1,13 +1,8 @@
 package notestore
 
 import (
-	"errors"
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/go-playground/validator/v10/non-standard/validators"
 	"github.com/psewda/typing/internal/utils"
 )
 
@@ -40,14 +35,7 @@ type WritableNote struct {
 // Validate checks all validation rules on writable note fields. It returns
 // error on any validation failure.
 func (n *WritableNote) Validate() error {
-	val := validator.New()
-	_ = val.RegisterValidation("notblank", validators.NotBlank)
-	err := val.Struct(n)
-	if err != nil {
-		errs := err.(validator.ValidationErrors)
-		return errors.New(translate(errs))
-	}
-	return nil
+	return utils.ValidateStruct(n, messages)
 }
 
 // Note represent full detail about note.
@@ -73,26 +61,4 @@ func init() {
 	messages["labels.item.max"] = "label must be less than 20 chars"
 	messages["metadata.max"] = "metadata count can't be more than 20"
 	messages["metadata.item.max"] = "metadata key and value must be less than 20 and 100 chars respectively"
-}
-
-func translate(errs validator.ValidationErrors) string {
-	getKey := func(e validator.FieldError) string {
-		field := strings.ToLower(e.Field())
-		tag := strings.ToLower(e.Tag())
-		if strings.Contains(field, "[") {
-			index := strings.Index(field, "[")
-			return fmt.Sprintf("%s.item.%s", field[0:index], tag)
-		}
-		return fmt.Sprintf("%s.%s", field, tag)
-	}
-
-	var msgs []string
-	for _, e := range errs {
-		key := getKey(e)
-		defmsg := fmt.Sprintf("validation for '%s' failed", key)
-		msg := utils.GetValueString(messages[key], defmsg)
-		msgs = append(msgs, msg)
-
-	}
-	return strings.Join(msgs, ", ")
 }
