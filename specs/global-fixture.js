@@ -5,7 +5,7 @@ const utils = require("./utils");
 exports.mochaGlobalSetup = async function () {
 	// handle "unhandled promise rejection" error
 	process.on("unhandledRejection", (error) => {
-		console.log("unhandled rejection:", error.message);
+		console.log("unhandled rejection:", error);
 		process.exit(1);
 	});
 
