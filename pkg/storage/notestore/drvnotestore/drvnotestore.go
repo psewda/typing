@@ -172,26 +172,11 @@ func sanitize(n *notestore.WritableNote) *notestore.WritableNote {
 
 	for _, l := range n.Labels {
 		cleanLabel := strings.TrimSpace(l)
-
-		// if there is any empty label, ignore it
 		if len(cleanLabel) > 0 {
 			note.Labels = append(note.Labels, cleanLabel)
 		}
 	}
-
-	for k, v := range n.Metadata {
-		cleanKey := strings.TrimSpace(k)
-		cleanValue := strings.TrimSpace(v)
-
-		// if there is any empty key, ignore it
-		if len(cleanKey) > 0 {
-			if note.Metadata == nil {
-				note.Metadata = make(map[string]string)
-			}
-			note.Metadata[cleanKey] = cleanValue
-		}
-	}
-
+	note.Metadata = utils.Sanitize(n.Metadata)
 	return &note
 }
 

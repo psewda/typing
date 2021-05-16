@@ -144,4 +144,19 @@ var _ = Describe("utility functions", func() {
 			}
 		})
 	})
+
+	Context("utility function: Sanitize", func() {
+		It("should cover all cases", func() {
+			m := map[string]string{
+				"k1":   "v1",
+				" k2 ": "v2",
+				" ":    "v3",
+			}
+			sanitized := utils.Sanitize(m)
+
+			Expect(sanitized).Should(HaveLen(2))
+			Expect(sanitized).Should(HaveKeyWithValue("k1", "v1"))
+			Expect(sanitized).Should(HaveKeyWithValue("k2", "v2"))
+		})
+	})
 })

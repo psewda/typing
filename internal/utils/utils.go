@@ -107,6 +107,25 @@ func ValidateStruct(s interface{}, m map[string]string) error {
 	return nil
 }
 
+// Sanitize removes the leading and trailing spaces from each map
+// items. If the map key contains only spaces, the key/value
+// pair is removed from the map.
+func Sanitize(m map[string]string) map[string]string {
+	var sanitized map[string]string
+	for k, v := range m {
+		cleanKey := strings.TrimSpace(k)
+		cleanValue := strings.TrimSpace(v)
+
+		if len(cleanKey) > 0 {
+			if sanitized == nil {
+				sanitized = make(map[string]string)
+			}
+			sanitized[cleanKey] = cleanValue
+		}
+	}
+	return sanitized
+}
+
 func translate(errs validator.ValidationErrors, m map[string]string) string {
 	getKey := func(e validator.FieldError) string {
 		field := strings.ToLower(e.Field())
