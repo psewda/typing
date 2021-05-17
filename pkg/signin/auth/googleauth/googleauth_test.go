@@ -142,8 +142,8 @@ var _ = Describe("googleauth", func() {
 		})
 	})
 
-	Context("revoke access token", func() {
-		It("should revoke successfully w/o error", func() {
+	Context("revoke token", func() {
+		It("should revoke token successfully w/o error", func() {
 			var writeContent writeFunc
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				writeContent(w)
@@ -157,7 +157,7 @@ var _ = Describe("googleauth", func() {
 				writeContent = func(w http.ResponseWriter) {
 					w.WriteHeader(http.StatusOK)
 				}
-				err := ga.Revoke("access-token")
+				err := ga.Revoke("valid-token")
 				Expect(err).ShouldNot(HaveOccurred())
 			}
 

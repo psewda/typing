@@ -210,7 +210,7 @@ var _ = Describe("auth controller", func() {
 				mockAuth.EXPECT().Revoke(gomock.Any()).Return(nil)
 				req := httptest.NewRequest(http.MethodPost, revokeRoute, nil)
 				form := url.Values{}
-				form.Add("access_token", "valid-token")
+				form.Add("token", "valid-token")
 				req.PostForm = form
 				ctx := newCtx(req, rec, withContainer(mockContainer))
 
@@ -236,7 +236,7 @@ var _ = Describe("auth controller", func() {
 				mockAuth.EXPECT().Revoke(gomock.Any()).Return(errors.New("error"))
 				req := httptest.NewRequest(http.MethodGet, revokeRoute, nil)
 				form := url.Values{}
-				form.Add("access_token", "valid-token")
+				form.Add("token", "valid-token")
 				req.PostForm = form
 				ctx := newCtx(req, rec, withContainer(mockContainer))
 

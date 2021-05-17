@@ -16,8 +16,8 @@ type Auth interface {
 	// Refresh renews access token using refresh token.
 	Refresh(refreshToken string) (*Token, error)
 
-	// Revoke cancels the access token and reset the authorization workflow.
-	Revoke(accessToken string) error
+	// Revoke cancels the access/refresh token and reset the authorization workflow.
+	Revoke(token string) error
 }
 
 // Token represents the credentials used to authorize.

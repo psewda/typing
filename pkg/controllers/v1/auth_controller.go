@@ -116,9 +116,9 @@ func Refresh(ctx echo.Context) error {
 // user needs to start authorization workflow again.
 func Revoke(ctx echo.Context) error {
 	auth := getAuth(ctx)
-	accessToken := ctx.FormValue("access_token")
-	if len(accessToken) == 0 {
-		msg := "acces token is empty"
+	token := ctx.FormValue("token")
+	if len(token) == 0 {
+		msg := "token value is empty"
 		ctx.Logger().Warn(msg)
 		return &echo.HTTPError{
 			Code:    http.StatusBadRequest,
@@ -126,9 +126,9 @@ func Revoke(ctx echo.Context) error {
 		}
 	}
 
-	err := auth.Revoke(accessToken)
+	err := auth.Revoke(token)
 	if err != nil {
-		msg := "access token revocation failed, check the access token"
+		msg := "token revocation failed, check the token value"
 		ctx.Logger().Error(utils.AppendError(msg, err))
 		return &echo.HTTPError{
 			Code:    http.StatusInternalServerError,

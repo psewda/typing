@@ -71,20 +71,20 @@ func (ga *GoogleAuth) Refresh(refreshToken string) (*auth.Token, error) {
 	}, nil
 }
 
-// Revoke cancels the access token and resets the authorization workflow.
-func (ga *GoogleAuth) Revoke(accessToken string) error {
+// Revoke cancels the access/refresh token and resets the authorization workflow.
+func (ga *GoogleAuth) Revoke(token string) error {
 	client := http.DefaultClient
 	values := url.Values{}
-	values.Set("token", accessToken)
+	values.Set("token", token)
 	revokeURL := toRevokeURL(ga.config.Endpoint.TokenURL)
 
 	res, err := client.PostForm(revokeURL, values)
 	if err != nil {
-		return utils.Error("access token revocation failed", err)
+		return utils.Error("token revocation failed", err)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("access token revocation failed with '%d' status code", res.StatusCode)
+		msg := fmt.Sprintf("token revocation failed with '%d' status code", res.StatusCode)
 		return errors.New(msg)
 	}
 	return nil
