@@ -53,16 +53,7 @@ func GetURL(ctx echo.Context) error {
 		}
 	}
 
-	url, err := auth.GetURL(redirect, state)
-	if err != nil {
-		msg := "error occurred while building authcode url"
-		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
-	}
-
+	url := auth.GetURL(redirect, state)
 	return ctx.JSON(http.StatusOK, types.URLValue{
 		URL: url,
 	})

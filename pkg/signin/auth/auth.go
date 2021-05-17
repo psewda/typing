@@ -8,7 +8,7 @@ import (
 // api like google, microsoft, facebook etc.
 type Auth interface {
 	// GetURL gets the url for authorization workflow.
-	GetURL(redirect, state string) (string, error)
+	GetURL(redirect, state string) string
 
 	// Exchange converts authorization code into token.
 	Exchange(code string) (*Token, error)

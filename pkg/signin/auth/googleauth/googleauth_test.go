@@ -46,20 +46,18 @@ var _ = Describe("googleauth", func() {
 
 			By("zero param")
 			{
-				u, err := ga.GetURL(utils.Empty, utils.Empty)
+				u := ga.GetURL(utils.Empty, utils.Empty)
 				Expect(u).ShouldNot(BeZero())
-				Expect(err).ShouldNot(HaveOccurred())
 			}
 
 			By("redirect and state")
 			{
 				redirect := "http://localhost:5050/redirect"
-				u, err := ga.GetURL(redirect, "state")
+				u := ga.GetURL(redirect, "state")
 				redirectQuery := fmt.Sprintf("&redirect_uri=%s", redirect)
 				stateQuery := "&state=state"
 				Expect(url.QueryUnescape(u)).Should(ContainSubstring(redirectQuery))
 				Expect(u).Should(ContainSubstring(stateQuery))
-				Expect(err).ShouldNot(HaveOccurred())
 			}
 		})
 	})

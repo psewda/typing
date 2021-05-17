@@ -49,12 +49,11 @@ func (mr *MockAuthMockRecorder) Exchange(arg0 interface{}) *gomock.Call {
 }
 
 // GetURL mocks base method
-func (m *MockAuth) GetURL(arg0, arg1 string) (string, error) {
+func (m *MockAuth) GetURL(arg0, arg1 string) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetURL", arg0, arg1)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
 // GetURL indicates an expected call of GetURL

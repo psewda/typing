@@ -10,10 +10,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/psewda/typing/internal/utils"
 	"github.com/psewda/typing/mocks"
 	ctrlv1 "github.com/psewda/typing/pkg/controllers/v1"
 	"github.com/psewda/typing/pkg/signin/auth"
@@ -40,7 +38,7 @@ var _ = Describe("auth controller", func() {
 			By("no param")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
-				mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL, nil)
+				mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL)
 				req := httptest.NewRequest(http.MethodGet, urlRoute, nil)
 				ctx := newCtx(req, rec, withContainer(mockContainer))
 
@@ -56,7 +54,7 @@ var _ = Describe("auth controller", func() {
 			By("valid redirect url")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
-				mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL, nil)
+				mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL)
 				u := fmt.Sprintf("%s?redirect=http://localhost:7070/redirect", urlRoute)
 				req := httptest.NewRequest(http.MethodGet, u, nil)
 				ctx := newCtx(req, rec, withContainer(mockContainer))
@@ -81,19 +79,6 @@ var _ = Describe("auth controller", func() {
 				httpError := toHTTPError(err)
 				Expect(httpError).Should(HaveOccurred())
 				Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
-			}
-
-			By("inner error")
-			{
-				mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
-				mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(utils.Empty, errors.New("error"))
-				req := httptest.NewRequest(http.MethodGet, urlRoute, nil)
-				ctx := newCtx(req, rec, withContainer(mockContainer))
-
-				err := ctrlv1.GetURL(ctx)
-				httpError := err.(*echo.HTTPError)
-				Expect(httpError).Should(HaveOccurred())
-				Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
 			}
 		})
 	})

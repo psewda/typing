@@ -33,13 +33,13 @@ type GoogleAuth struct {
 }
 
 // GetURL build the authorization workflow url for google oauth api.
-func (ga *GoogleAuth) GetURL(redirect, state string) (string, error) {
+func (ga *GoogleAuth) GetURL(redirect, state string) string {
 	if len(redirect) > 0 {
 		ga.config.RedirectURL = redirect
 	}
 
 	s := utils.GetValueString(state, "0")
-	return ga.config.AuthCodeURL(s, oauth2.AccessTypeOffline), nil
+	return ga.config.AuthCodeURL(s, oauth2.AccessTypeOffline)
 }
 
 // Exchange converts the authorization code to access token.
