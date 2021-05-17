@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/psewda/typing/internal/utils"
+	"github.com/psewda/typing/pkg/errs"
 	"github.com/psewda/typing/pkg/signin/userinfo/googleuserinfo"
 )
 
@@ -34,6 +35,15 @@ var _ = Describe("google userinfo", func() {
 				Expect(u.Name).Should(Equal("username"))
 				Expect(u.Email).Should(Equal("email@mail.com"))
 				Expect(err).ShouldNot(HaveOccurred())
+			}
+
+			By("authorization failure")
+			{
+				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
+				gui, _ := googleuserinfo.New(client)
+				_, err := gui.Get()
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
 			}
 
 			By("inner error")

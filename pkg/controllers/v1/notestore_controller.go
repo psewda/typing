@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"net/http"
 	"path"
 
@@ -68,10 +67,7 @@ func CreateNote(ctx echo.Context) error {
 	if err != nil {
 		msg := "note creation error"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
 	ctx.Response().Header().Add(echo.HeaderLocation, path.Join(ctx.Path(), note.ID))
@@ -86,10 +82,7 @@ func GetNotes(ctx echo.Context) error {
 	if err != nil {
 		msg := "note retrival error"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
 	return ctx.JSON(http.StatusOK, notes)
@@ -104,21 +97,9 @@ func GetNote(ctx echo.Context) error {
 	if err != nil {
 		msg := "note retrival error"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
-	// note doesn't exist, so return 'NotFound' status
-	if note == nil {
-		msg := fmt.Sprintf("note with id '%s' not found", id)
-		ctx.Logger().Warn(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: msg,
-		}
-	}
 	return ctx.JSON(http.StatusOK, note)
 }
 
@@ -153,20 +134,7 @@ func UpdateNote(ctx echo.Context) error {
 	if err != nil {
 		msg := "note updation error"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
-	}
-
-	// note doesn't exist, so return 'NotFound' status
-	if note == nil {
-		msg := fmt.Sprintf("note with id '%s' not found", id)
-		ctx.Logger().Warn(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
 	return ctx.JSON(http.StatusOK, note)
@@ -177,24 +145,11 @@ func DeleteNote(ctx echo.Context) error {
 	ns := getNotestore(ctx)
 	id := ctx.Param("id")
 
-	status, err := ns.Delete(id)
+	_, err := ns.Delete(id)
 	if err != nil {
 		msg := "note deletion error"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
-	}
-
-	// note doesn't exist, so return 'NotFound' status
-	if !status {
-		msg := fmt.Sprintf("note with id '%s' not found", id)
-		ctx.Logger().Warn(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)

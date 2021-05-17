@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/psewda/typing/internal/utils"
+	"github.com/psewda/typing/pkg/errs"
 	"github.com/psewda/typing/pkg/signin/userinfo"
 	oauth2v2 "google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
@@ -21,6 +22,9 @@ type GoogleUserinfo struct {
 func (gu *GoogleUserinfo) Get() (*userinfo.User, error) {
 	ui, err := gu.service.Userinfo.Get().Do()
 	if err != nil {
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return nil, errs.NewUnauthorizedError()
+		}
 		return nil, utils.Error("error while getting user info", err)
 	}
 

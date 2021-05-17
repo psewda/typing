@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/psewda/typing/internal/utils"
+	"github.com/psewda/typing/pkg/errs"
 	"github.com/psewda/typing/pkg/storage/notestore"
 	"github.com/psewda/typing/pkg/storage/notestore/drvnotestore"
 	"google.golang.org/api/drive/v3"
@@ -111,6 +112,19 @@ var _ = Describe("googledrive notestore", func() {
 				Expect(note).Should(BeNil())
 			}
 
+			By("authorization failure")
+			{
+				code := http.StatusUnauthorized
+				client := utils.ClientWithJSON("{}", code)
+				drvns, _ := drvnotestore.New(client)
+				_, err := drvns.Create(&notestore.WritableNote{
+					Name: "note",
+				})
+
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
+			}
+
 			By("inner error")
 			{
 				code := http.StatusInternalServerError
@@ -169,6 +183,16 @@ var _ = Describe("googledrive notestore", func() {
 				Expect(len(notes[1].Metadata)).Should(Equal(1))
 			}
 
+			By("authorization failure")
+			{
+				code := http.StatusUnauthorized
+				client := utils.ClientWithJSON("{}", code)
+				drvns, _ := drvnotestore.New(client)
+				_, err := drvns.GetAll()
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
+			}
+
 			By("inner error")
 			{
 				code := http.StatusInternalServerError
@@ -210,9 +234,18 @@ var _ = Describe("googledrive notestore", func() {
 			{
 				client := utils.ClientWithJSON("{}", http.StatusNotFound)
 				drvns, _ := drvnotestore.New(client)
-				note, err := drvns.Get("id")
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(note).Should(BeNil())
+				_, err := drvns.Get("id")
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewNotFoundError("msg")))
+			}
+
+			By("authorization failure")
+			{
+				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
+				drvns, _ := drvnotestore.New(client)
+				_, err := drvns.Get("id")
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
 			}
 
 			By("inner error")
@@ -251,11 +284,22 @@ var _ = Describe("googledrive notestore", func() {
 			{
 				client := utils.ClientWithJSON("{}", http.StatusNotFound)
 				drvns, _ := drvnotestore.New(client)
-				note, err := drvns.Update("id", &notestore.WritableNote{
+				_, err := drvns.Update("id", &notestore.WritableNote{
 					Name: "note",
 				})
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(note).Should(BeNil())
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewNotFoundError("msg")))
+			}
+
+			By("authorization failure")
+			{
+				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
+				drvns, _ := drvnotestore.New(client)
+				_, err := drvns.Update("id", &notestore.WritableNote{
+					Name: "note",
+				})
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
 			}
 
 			By("inner error")
@@ -288,7 +332,18 @@ var _ = Describe("googledrive notestore", func() {
 				client := utils.ClientWithJSON("{}", http.StatusNotFound)
 				drvns, _ := drvnotestore.New(client)
 				status, err := drvns.Delete("id")
-				Expect(err).ShouldNot(HaveOccurred())
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewNotFoundError("msg")))
+				Expect(status).Should(BeFalse())
+			}
+
+			By("authorization failure")
+			{
+				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
+				drvns, _ := drvnotestore.New(client)
+				status, err := drvns.Delete("id")
+				Expect(err).Should(HaveOccurred())
+				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
 				Expect(status).Should(BeFalse())
 			}
 

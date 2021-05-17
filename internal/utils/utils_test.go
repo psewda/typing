@@ -12,6 +12,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/psewda/typing/internal/utils"
+	"github.com/psewda/typing/pkg/errs"
+	"google.golang.org/api/googleapi"
 )
 
 func TestUtils(t *testing.T) {
@@ -157,6 +159,51 @@ var _ = Describe("utility functions", func() {
 			Expect(sanitized).Should(HaveLen(2))
 			Expect(sanitized).Should(HaveKeyWithValue("k1", "v1"))
 			Expect(sanitized).Should(HaveKeyWithValue("k2", "v2"))
+		})
+	})
+
+	Context("utility function: GetStatusCode", func() {
+		It("should cover all cases", func() {
+			By("status code 401")
+			{
+				err := googleapi.Error{
+					Code:    http.StatusUnauthorized,
+					Message: "unauthorized",
+				}
+				code := utils.GetStatusCode(&err)
+				Expect(code).Should(Equal(http.StatusUnauthorized))
+			}
+
+			By("status code -1")
+			{
+				code := utils.GetStatusCode(errors.New("error"))
+				Expect(code).Should(Equal(-1))
+			}
+		})
+	})
+
+	Context("utility function: BuildHTTPError", func() {
+		It("should cover all cases", func() {
+			By("unauthorized")
+			{
+				err := errs.NewUnauthorizedError()
+				httpError := utils.BuildHTTPError(err, utils.Empty)
+				Expect(httpError.Code).Should(Equal(http.StatusUnauthorized))
+			}
+
+			By("not found")
+			{
+				err := errs.NewNotFoundError("msg")
+				httpError := utils.BuildHTTPError(err, utils.Empty)
+				Expect(httpError.Code).Should(Equal(http.StatusNotFound))
+			}
+
+			By("internal server error")
+			{
+				err := errors.New("msg")
+				httpError := utils.BuildHTTPError(err, utils.Empty)
+				Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
+			}
 		})
 	})
 })

@@ -12,6 +12,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/non-standard/validators"
 	"github.com/labstack/echo/v4"
+	"github.com/psewda/typing/pkg/errs"
+	"google.golang.org/api/googleapi"
 )
 
 const (
@@ -124,6 +126,41 @@ func Sanitize(m map[string]string) map[string]string {
 		}
 	}
 	return sanitized
+}
+
+// GetStatusCode extracts http status code from the error object.
+func GetStatusCode(err error) int {
+	e, ok := err.(*googleapi.Error)
+	if ok {
+		return e.Code
+	}
+	return -1
+}
+
+// BuildHTTPError converts error object to http error by
+// checking internal http status code.
+func BuildHTTPError(err error, msg string) *echo.HTTPError {
+	// check "Unauthorized" error
+	if _, ok := err.(*errs.UnauthorizedError); ok {
+		return &echo.HTTPError{
+			Code:    http.StatusUnauthorized,
+			Message: err.Error(),
+		}
+	}
+
+	// check "NotFound" error
+	if _, ok := err.(*errs.NotFoundError); ok {
+		return &echo.HTTPError{
+			Code:    http.StatusNotFound,
+			Message: err.Error(),
+		}
+	}
+
+	// check any other error
+	return &echo.HTTPError{
+		Code:    http.StatusInternalServerError,
+		Message: msg,
+	}
 }
 
 func translate(errs validator.ValidationErrors, m map[string]string) string {

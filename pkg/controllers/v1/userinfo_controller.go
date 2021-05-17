@@ -39,10 +39,7 @@ func GetUser(ctx echo.Context) error {
 	if err != nil {
 		msg := "error occurred while fetching user"
 		ctx.Logger().Error(utils.AppendError(msg, err))
-		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: msg,
-		}
+		return utils.BuildHTTPError(err, msg)
 	}
 
 	return ctx.JSON(http.StatusOK, u)

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/psewda/typing/internal/utils"
+	"github.com/psewda/typing/pkg/errs"
 	"github.com/psewda/typing/pkg/storage/notestore"
 	"google.golang.org/api/drive/v3"
-	"google.golang.org/api/googleapi"
 )
 
 const (
@@ -43,6 +43,9 @@ func (ns *DrvNotestore) Create(n *notestore.WritableNote) (*notestore.Note, erro
 
 	file, err := ns.service.Files.Create(&f).Fields(fileFields).Do()
 	if err != nil {
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return nil, errs.NewUnauthorizedError()
+		}
 		return nil, utils.Error("file creation error", err)
 	}
 
@@ -53,6 +56,9 @@ func (ns *DrvNotestore) Create(n *notestore.WritableNote) (*notestore.Note, erro
 func (ns *DrvNotestore) GetAll() ([]*notestore.Note, error) {
 	list, err := ns.service.Files.List().Spaces(appdir).Fields(fileListFields).Do()
 	if err != nil {
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return nil, errs.NewUnauthorizedError()
+		}
 		return nil, utils.Error("file listing error", err)
 	}
 
@@ -69,18 +75,11 @@ func (ns *DrvNotestore) Get(id string) (*notestore.Note, error) {
 		return nil, errors.New("note id is nil")
 	}
 
-	file, err := getFile(id, ns.service)
+	file, err := getFile(ns.service, id)
 	if err != nil {
 		return nil, err
 	}
-
-	// file found, so convert it into note
-	if file != nil {
-		return toNote(file), nil
-	}
-
-	// file doesn't exist, so return nil
-	return nil, nil
+	return toNote(file), nil
 }
 
 // Update modifies the note and saves back on google drive.
@@ -89,38 +88,35 @@ func (ns *DrvNotestore) Update(id string, n *notestore.WritableNote) (*notestore
 		return nil, errors.New("note id is nil")
 	}
 
-	file, err := getFile(id, ns.service)
+	file, err := getFile(ns.service, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// file found, so try to update it
-	if file != nil {
-		note := sanitize(n)
+	note := sanitize(n)
 
-		// update api uses patch sementics, so to clear a field, it must be sent as
-		// null value. If any field has an empty value, then it will be ignored
-		// in json serialization and will NOT be updated. We have to use NullFields
-		// and ForceSendFields to tell which fields are required to be sent as
-		// null value. The below link has more detail on the issue -
-		// https://github.com/googleapis/google-api-go-client/issues/201
-		f := drive.File{
-			Name:            fmt.Sprintf("%s.json", note.Name),
-			Description:     note.Description,
-			Properties:      fillProps(note),
-			NullFields:      getNullFields(note, file),
-			ForceSendFields: []string{"Description", "Properties"},
-		}
-
-		updated, err := ns.service.Files.Update(file.Id, &f).Fields(fileFields).Do()
-		if err != nil {
-			return nil, utils.Error("file updation error", err)
-		}
-		return toNote(updated), nil
+	// update api uses patch sementics, so to clear a field, it must be sent as
+	// null value. If any field has an empty value, then it will be ignored
+	// in json serialization and will NOT be updated. We have to use NullFields
+	// and ForceSendFields to tell which fields are required to be sent as
+	// null value. The below link has more detail on the issue -
+	// https://github.com/googleapis/google-api-go-client/issues/201
+	f := drive.File{
+		Name:            fmt.Sprintf("%s.json", note.Name),
+		Description:     note.Description,
+		Properties:      fillProps(note),
+		NullFields:      getNullFields(note, file),
+		ForceSendFields: []string{"Description", "Properties"},
 	}
 
-	// file doesn't exist, so return nil
-	return nil, nil
+	updated, err := ns.service.Files.Update(file.Id, &f).Fields(fileFields).Do()
+	if err != nil {
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return nil, errs.NewUnauthorizedError()
+		}
+		return nil, utils.Error("file updation error", err)
+	}
+	return toNote(updated), nil
 }
 
 // Delete removes the note from google drive.
@@ -131,9 +127,11 @@ func (ns *DrvNotestore) Delete(id string) (bool, error) {
 
 	err := ns.service.Files.Delete(id).Do()
 	if err != nil {
-		// file doesn't exist, so return false
-		if checkNotFound(err) {
-			return false, nil
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return false, errs.NewUnauthorizedError()
+		}
+		if utils.GetStatusCode(err) == http.StatusNotFound {
+			return false, buildNotFoundError(id)
 		}
 		return false, utils.Error("file deletion error", err)
 	}
@@ -228,26 +226,19 @@ func checkNote(n *notestore.WritableNote) error {
 	return n.Validate()
 }
 
-func getFile(id string, service *drive.Service) (*drive.File, error) {
+func getFile(service *drive.Service, id string) (*drive.File, error) {
 	file, err := service.Files.Get(id).Fields(fileFields).Do()
 	if err != nil {
-		if checkNotFound(err) {
-			return nil, nil
+		if utils.GetStatusCode(err) == http.StatusUnauthorized {
+			return nil, errs.NewUnauthorizedError()
+		}
+		if utils.GetStatusCode(err) == http.StatusNotFound {
+			return nil, buildNotFoundError(id)
 		}
 		return nil, utils.Error("file retrival error", err)
 	}
 
 	return file, nil
-}
-
-func checkNotFound(err error) bool {
-	e, ok := err.(*googleapi.Error)
-	if ok {
-		if e.Code == http.StatusNotFound {
-			return true
-		}
-	}
-	return false
 }
 
 func getNullFields(n *notestore.WritableNote, f *drive.File) []string {
@@ -265,4 +256,9 @@ func getNullFields(n *notestore.WritableNote, f *drive.File) []string {
 		}
 	}
 	return nullFields
+}
+
+func buildNotFoundError(id string) *errs.NotFoundError {
+	msg := fmt.Sprintf("note with id '%s' not found", id)
+	return errs.NewNotFoundError(msg)
 }

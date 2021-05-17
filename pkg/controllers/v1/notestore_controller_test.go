@@ -159,19 +159,6 @@ var _ = Describe("notestore controller", func() {
 				Expect(n.Description).Should(Equal("desc"))
 			}
 
-			By("wrong id")
-			{
-				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
-				mockNotestore.EXPECT().Get(gomock.Any()).Return(nil, nil)
-				req := httptest.NewRequest(http.MethodGet, noteRouteWithID, nil)
-				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-
-				err := ctrlv1.GetNote(ctx)
-				httpError := toHTTPError(err)
-				Expect(httpError).Should(HaveOccurred())
-				Expect(httpError.Code).Should(Equal(http.StatusNotFound))
-			}
-
 			By("inner error")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
@@ -219,19 +206,6 @@ var _ = Describe("notestore controller", func() {
 				Expect(n.Description).Should(Equal("desc"))
 			}
 
-			By("wrong note id")
-			{
-				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
-				mockNotestore.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, nil)
-				req := newReq(`{"name": "note"}`)
-				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-
-				err := ctrlv1.UpdateNote(ctx)
-				httpError := toHTTPError(err)
-				Expect(httpError).Should(HaveOccurred())
-				Expect(httpError.Code).Should(Equal(http.StatusNotFound))
-			}
-
 			By("inner error")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
@@ -257,19 +231,6 @@ var _ = Describe("notestore controller", func() {
 				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
 				ctrlv1.DeleteNote(ctx)
 				Expect(rec.Code).Should(Equal(http.StatusNoContent))
-			}
-
-			By("wrong note id")
-			{
-				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
-				mockNotestore.EXPECT().Delete(gomock.Any()).Return(false, nil)
-				req := httptest.NewRequest(http.MethodDelete, noteRouteWithID, nil)
-				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-
-				err := ctrlv1.DeleteNote(ctx)
-				httpError := toHTTPError(err)
-				Expect(httpError).Should(HaveOccurred())
-				Expect(httpError.Code).Should(Equal(http.StatusNotFound))
 			}
 
 			By("inner error")
