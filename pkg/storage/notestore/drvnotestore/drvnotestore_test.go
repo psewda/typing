@@ -322,29 +322,26 @@ var _ = Describe("googledrive notestore", func() {
 			{
 				client := utils.ClientWithJSON("{}", http.StatusOK)
 				drvns, _ := drvnotestore.New(client)
-				status, err := drvns.Delete("id")
+				err := drvns.Delete("id")
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(status).Should(BeTrue())
 			}
 
 			By("wrong note id")
 			{
 				client := utils.ClientWithJSON("{}", http.StatusNotFound)
 				drvns, _ := drvnotestore.New(client)
-				status, err := drvns.Delete("id")
+				err := drvns.Delete("id")
 				Expect(err).Should(HaveOccurred())
 				Expect(err).Should(BeAssignableToTypeOf(errs.NewNotFoundError("msg")))
-				Expect(status).Should(BeFalse())
 			}
 
 			By("authorization failure")
 			{
 				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
 				drvns, _ := drvnotestore.New(client)
-				status, err := drvns.Delete("id")
+				err := drvns.Delete("id")
 				Expect(err).Should(HaveOccurred())
 				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
-				Expect(status).Should(BeFalse())
 			}
 
 			By("inner error")
@@ -352,7 +349,7 @@ var _ = Describe("googledrive notestore", func() {
 				code := http.StatusInternalServerError
 				client := utils.ClientWithJSON("error", code)
 				drvns, _ := drvnotestore.New(client)
-				_, err := drvns.Delete("id")
+				err := drvns.Delete("id")
 				Expect(err).Should(HaveOccurred())
 			}
 		})

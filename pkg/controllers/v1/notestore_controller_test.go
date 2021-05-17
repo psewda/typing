@@ -226,7 +226,7 @@ var _ = Describe("notestore controller", func() {
 			By("correct note id")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
-				mockNotestore.EXPECT().Delete(gomock.Any()).Return(true, nil)
+				mockNotestore.EXPECT().Delete(gomock.Any()).Return(nil)
 				req := httptest.NewRequest(http.MethodDelete, noteRouteWithID, nil)
 				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
 				ctrlv1.DeleteNote(ctx)
@@ -236,7 +236,7 @@ var _ = Describe("notestore controller", func() {
 			By("inner error")
 			{
 				mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockNotestore, nil)
-				mockNotestore.EXPECT().Delete(gomock.Any()).Return(false, errors.New("error"))
+				mockNotestore.EXPECT().Delete(gomock.Any()).Return(errors.New("error"))
 				req := httptest.NewRequest(http.MethodDelete, noteRouteWithID, nil)
 				ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
 

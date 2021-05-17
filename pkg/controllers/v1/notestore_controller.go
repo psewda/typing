@@ -145,7 +145,7 @@ func DeleteNote(ctx echo.Context) error {
 	ns := getNotestore(ctx)
 	id := ctx.Param("id")
 
-	_, err := ns.Delete(id)
+	err := ns.Delete(id)
 	if err != nil {
 		msg := "note deletion error"
 		ctx.Logger().Error(utils.AppendError(msg, err))

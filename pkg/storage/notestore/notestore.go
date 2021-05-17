@@ -21,7 +21,7 @@ type Notestore interface {
 	Update(id string, n *WritableNote) (*Note, error)
 
 	// Delete removes the note from cloud storage.
-	Delete(id string) (bool, error)
+	Delete(id string) error
 }
 
 // WritableNote is used for creating and updating note.

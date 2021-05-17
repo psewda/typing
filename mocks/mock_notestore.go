@@ -49,12 +49,11 @@ func (mr *MockNotestoreMockRecorder) Create(arg0 interface{}) *gomock.Call {
 }
 
 // Delete mocks base method
-func (m *MockNotestore) Delete(arg0 string) (bool, error) {
+func (m *MockNotestore) Delete(arg0 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Delete indicates an expected call of Delete

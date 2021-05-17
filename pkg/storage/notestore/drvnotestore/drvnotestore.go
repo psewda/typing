@@ -120,24 +120,24 @@ func (ns *DrvNotestore) Update(id string, n *notestore.WritableNote) (*notestore
 }
 
 // Delete removes the note from google drive.
-func (ns *DrvNotestore) Delete(id string) (bool, error) {
+func (ns *DrvNotestore) Delete(id string) error {
 	if len(id) == 0 {
-		return false, errors.New("note id is nil")
+		return errors.New("note id is nil")
 	}
 
 	err := ns.service.Files.Delete(id).Do()
 	if err != nil {
 		if utils.GetStatusCode(err) == http.StatusUnauthorized {
-			return false, errs.NewUnauthorizedError()
+			return errs.NewUnauthorizedError()
 		}
 		if utils.GetStatusCode(err) == http.StatusNotFound {
-			return false, buildNotFoundError(id)
+			return buildNotFoundError(id)
 		}
-		return false, utils.Error("file deletion error", err)
+		return utils.Error("file deletion error", err)
 	}
 
-	// file deleted, so return true
-	return true, nil
+	// file deleted, so return nil
+	return nil
 }
 
 // New creates a new instance of google drive notestore.
