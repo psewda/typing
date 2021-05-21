@@ -23,59 +23,60 @@ func TestUtils(t *testing.T) {
 
 var _ = Describe("utility functions", func() {
 	Context("utility function: GetValueString()", func() {
-		It("should cover all cases", func() {
-			By("valid value")
+		It("should return specified value when valid value", func() {
 			v := utils.GetValueString("value", utils.Empty)
 			Expect(v).Should(Equal("value"))
+		})
 
-			By("empty value")
-			v = utils.GetValueString(utils.Empty, "default")
+		It("should return default value when empty value", func() {
+			v := utils.GetValueString(utils.Empty, "default")
 			Expect(v).Should(Equal("default"))
 		})
 	})
 
 	Context("utility function: Error()", func() {
-		It("should cover all cases", func() {
-			By("valid input")
+		It("should create new error when valid input", func() {
 			err := utils.Error("value", errors.New("inner"))
 			Expect(err.Error()).Should(Equal("value: [inner]"))
+		})
 
-			By("zero input")
-			err = utils.Error(utils.Empty, nil)
+		It("should create new error when zero input", func() {
+			err := utils.Error(utils.Empty, nil)
 			Expect(err.Error()).Should(Equal("error"))
 		})
 	})
 
 	Context("utility function: AppendError()", func() {
-		It("should cover all cases", func() {
-			By("valid input")
+		It("should append error message when valid input", func() {
 			msg := utils.AppendError("value", errors.New("inner"))
 			Expect(msg).Should(Equal("value: [inner]"))
+		})
 
-			By("only value")
-			msg = utils.AppendError("value", nil)
+		It("should return just value when nil error", func() {
+			msg := utils.AppendError("value", nil)
 			Expect(msg).Should(Equal("value"))
 		})
 	})
 
 	Context("utility function: CheckLocalhostURL()", func() {
-		It("should cover all cases", func() {
-			By("valid url")
+		It("should pass the validation when valid url", func() {
 			err := utils.CheckLocalhostURL("http://localhost:5050/redirect")
 			Expect(err).ShouldNot(HaveOccurred())
+		})
 
-			By("wrong url")
-			err = utils.CheckLocalhostURL("invalid-value")
+		It("should fail the validation when wrong url", func() {
+			err := utils.CheckLocalhostURL("invalid-value")
 			Expect(err).Should(HaveOccurred())
+		})
 
-			By("non localhost url")
-			err = utils.CheckLocalhostURL("http://example.com:5050/redirect")
+		It("should fail the validation when non localhost url", func() {
+			err := utils.CheckLocalhostURL("http://example.com:5050/redirect")
 			Expect(err).Should(HaveOccurred())
 		})
 	})
 
 	Context("utility function: ClientWithToken()", func() {
-		It("should cover all cases", func() {
+		It("should create http client with specified token", func() {
 			const accessToken = "access-token"
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				headerValue := r.Header.Get(echo.HeaderAuthorization)
@@ -97,7 +98,7 @@ var _ = Describe("utility functions", func() {
 	})
 
 	Context("utility function: ClientWithJSON", func() {
-		It("should cover all cases", func() {
+		It("should create http client with specified json", func() {
 			j := `{"key": "value"}`
 			client := utils.ClientWithJSON(j, http.StatusCreated)
 			Expect(client).ShouldNot(BeNil())
@@ -113,42 +114,39 @@ var _ = Describe("utility functions", func() {
 	})
 
 	Context("utility function: ValidateStruct", func() {
-		It("should cover all cases", func() {
-			type Value struct {
-				Name        string `json:"name,omitempty" validate:"required,notblank"`
-				Description string `json:"desc,omitempty" validate:"max=250"`
-			}
+		type Value struct {
+			Name        string `json:"name,omitempty" validate:"required,notblank"`
+			Description string `json:"desc,omitempty" validate:"max=250"`
+		}
 
+		It("should pass the validation when all checks are passed", func() {
 			m := make(map[string]string)
 			m["name.required"] = "name is required field"
-			m["name.notblank"] = "name can't be empty value"
 			m["description.max"] = "desc must be less than 250 chars"
-
-			By("validation successful")
-			{
-				v := &Value{
-					Name:        "name",
-					Description: "desc",
-				}
-				err := utils.ValidateStruct(v, m)
-				Expect(err).ShouldNot(HaveOccurred())
+			v := &Value{
+				Name:        "name",
+				Description: "desc",
 			}
-
-			By("validation error")
-			{
-				v := &Value{
-					Name:        utils.Empty,
-					Description: "desc",
-				}
-				err := utils.ValidateStruct(v, m)
-				Expect(err).Should(HaveOccurred())
-				Expect(err.Error()).Should(Equal("name is required field"))
-			}
+			err := utils.ValidateStruct(v, m)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
+
+		It("should fail the validation when either check is failed", func() {
+			m := make(map[string]string)
+			m["name.required"] = "name is required field"
+			v := &Value{
+				Name:        utils.Empty,
+				Description: "desc",
+			}
+			err := utils.ValidateStruct(v, m)
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).Should(Equal("name is required field"))
+		})
+
 	})
 
 	Context("utility function: Sanitize", func() {
-		It("should cover all cases", func() {
+		It("should remove all the leading and trailing spaces", func() {
 			m := map[string]string{
 				"k1":   "v1",
 				" k2 ": "v2",
@@ -163,47 +161,38 @@ var _ = Describe("utility functions", func() {
 	})
 
 	Context("utility function: GetStatusCode", func() {
-		It("should cover all cases", func() {
-			By("status code 401")
-			{
-				err := googleapi.Error{
-					Code:    http.StatusUnauthorized,
-					Message: "unauthorized",
-				}
-				code := utils.GetStatusCode(&err)
-				Expect(code).Should(Equal(http.StatusUnauthorized))
+		It("should return the status code embedded in error", func() {
+			err := googleapi.Error{
+				Code:    http.StatusUnauthorized,
+				Message: "unauthorized",
 			}
+			code := utils.GetStatusCode(&err)
+			Expect(code).Should(Equal(http.StatusUnauthorized))
+		})
 
-			By("status code -1")
-			{
-				code := utils.GetStatusCode(errors.New("error"))
-				Expect(code).Should(Equal(-1))
-			}
+		It("should return -1 when no status code in error", func() {
+			code := utils.GetStatusCode(errors.New("error"))
+			Expect(code).Should(Equal(-1))
 		})
 	})
 
 	Context("utility function: BuildHTTPError", func() {
-		It("should cover all cases", func() {
-			By("unauthorized")
-			{
-				err := errs.NewUnauthorizedError()
-				httpError := utils.BuildHTTPError(err, utils.Empty)
-				Expect(httpError.Code).Should(Equal(http.StatusUnauthorized))
-			}
+		It("should be unauthorized error ", func() {
+			err := errs.NewUnauthorizedError()
+			httpError := utils.BuildHTTPError(err, utils.Empty)
+			Expect(httpError.Code).Should(Equal(http.StatusUnauthorized))
+		})
 
-			By("not found")
-			{
-				err := errs.NewNotFoundError("msg")
-				httpError := utils.BuildHTTPError(err, utils.Empty)
-				Expect(httpError.Code).Should(Equal(http.StatusNotFound))
-			}
+		It("should be notfound error", func() {
+			err := errs.NewNotFoundError("msg")
+			httpError := utils.BuildHTTPError(err, utils.Empty)
+			Expect(httpError.Code).Should(Equal(http.StatusNotFound))
+		})
 
-			By("internal server error")
-			{
-				err := errors.New("msg")
-				httpError := utils.BuildHTTPError(err, utils.Empty)
-				Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
-			}
+		It("should be internal server error", func() {
+			err := errors.New("msg")
+			httpError := utils.BuildHTTPError(err, utils.Empty)
+			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
 		})
 	})
 })

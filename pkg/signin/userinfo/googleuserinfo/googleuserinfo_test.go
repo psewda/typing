@@ -18,41 +18,36 @@ func TestGoogleUserinfo(t *testing.T) {
 
 var _ = Describe("google userinfo", func() {
 	Context("get userinfo", func() {
-		It("should return userinfo data", func() {
-			By("right setup")
-			{
-				j := `{
+		It("should return userinfo when right setup", func() {
+			j := `{
 					"id": "112295411320093",
 					"name": "username",
 					"email": "email@mail.com",
 					"picture": "https://lh3.googleusercontent.com/AOh14GiShoGb1kvP=q01-b"
 				}`
-				client := utils.ClientWithJSON(j, http.StatusOK)
-				gui, _ := googleuserinfo.New(client)
-				u, err := gui.Get()
+			client := utils.ClientWithJSON(j, http.StatusOK)
+			gui, _ := googleuserinfo.New(client)
+			u, err := gui.Get()
 
-				Expect(u).ShouldNot(BeNil())
-				Expect(u.Name).Should(Equal("username"))
-				Expect(u.Email).Should(Equal("email@mail.com"))
-				Expect(err).ShouldNot(HaveOccurred())
-			}
+			Expect(u).ShouldNot(BeNil())
+			Expect(u.Name).Should(Equal("username"))
+			Expect(u.Email).Should(Equal("email@mail.com"))
+			Expect(err).ShouldNot(HaveOccurred())
+		})
 
-			By("authorization failure")
-			{
-				client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
-				gui, _ := googleuserinfo.New(client)
-				_, err := gui.Get()
-				Expect(err).Should(HaveOccurred())
-				Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
-			}
+		It("should return error when authorization failure", func() {
+			client := utils.ClientWithJSON("{}", http.StatusUnauthorized)
+			gui, _ := googleuserinfo.New(client)
+			_, err := gui.Get()
+			Expect(err).Should(HaveOccurred())
+			Expect(err).Should(BeAssignableToTypeOf(errs.NewUnauthorizedError()))
+		})
 
-			By("inner error")
-			{
-				client := utils.ClientWithJSON("error", http.StatusInternalServerError)
-				gui, _ := googleuserinfo.New(client)
-				_, err := gui.Get()
-				Expect(err).Should(HaveOccurred())
-			}
+		It("should return error when any inner error", func() {
+			client := utils.ClientWithJSON("error", http.StatusInternalServerError)
+			gui, _ := googleuserinfo.New(client)
+			_, err := gui.Get()
+			Expect(err).Should(HaveOccurred())
 		})
 	})
 })

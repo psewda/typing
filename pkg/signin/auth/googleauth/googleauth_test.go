@@ -40,135 +40,149 @@ var _ = Describe("googleauth", func() {
 	  }`
 
 	Context("get auth url", func() {
-		It("should return valid url", func() {
+		It("should return auth url when having zero param", func() {
 			cred := strings.Replace(credTemplate, "{token_url}", tokenURL, 1)
 			ga, _ := googleauth.New([]byte(cred))
+			u := ga.GetURL(utils.Empty, utils.Empty)
+			Expect(u).ShouldNot(BeZero())
+		})
 
-			By("zero param")
-			{
-				u := ga.GetURL(utils.Empty, utils.Empty)
-				Expect(u).ShouldNot(BeZero())
-			}
-
-			By("redirect and state")
-			{
-				redirect := "http://localhost:5050/redirect"
-				u := ga.GetURL(redirect, "state")
-				redirectQuery := fmt.Sprintf("&redirect_uri=%s", redirect)
-				stateQuery := "&state=state"
-				Expect(url.QueryUnescape(u)).Should(ContainSubstring(redirectQuery))
-				Expect(u).Should(ContainSubstring(stateQuery))
-			}
+		It("should return auth url when having redirect and state values", func() {
+			cred := strings.Replace(credTemplate, "{token_url}", tokenURL, 1)
+			ga, _ := googleauth.New([]byte(cred))
+			redirect := "http://localhost:5050/redirect"
+			u := ga.GetURL(redirect, "state")
+			redirectQuery := fmt.Sprintf("&redirect_uri=%s", redirect)
+			stateQuery := "&state=state"
+			Expect(url.QueryUnescape(u)).Should(ContainSubstring(redirectQuery))
+			Expect(u).Should(ContainSubstring(stateQuery))
 		})
 	})
 
 	Context("exchange authcode", func() {
-		It("should return valid token", func() {
-			var writeContent writeFunc
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var writeContent writeFunc
+		var ts *httptest.Server
+
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				writeContent(w)
 			}))
-			defer ts.Close()
+		})
+
+		AfterEach(func() {
+			ts.Close()
+		})
+
+		It("should succeed when valid authcode", func() {
+			accessToken := "90d6446as32safy868asa0d14870c"
+			refreshToken := "302305ma3s837uags57ffvfs9jksq"
+			writeContent = func(w http.ResponseWriter) {
+				w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+				format := "access_token=%s&refresh_token=%s&expires_in=%d"
+				data := fmt.Sprintf(format, accessToken, refreshToken, 3600)
+				w.Write([]byte(data))
+			}
+
 			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
 			ga, _ := googleauth.New([]byte(cred))
+			token, err := ga.Exchange("valid-authcode")
 
-			By("valid authcode")
-			{
-				accessToken := "90d6446as32safy868asa0d14870c"
-				refreshToken := "302305ma3s837uags57ffvfs9jksq"
-				expiresIn := 3600
-				writeContent = func(w http.ResponseWriter) {
-					w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-					format := "access_token=%s&refresh_token=%s&expires_in=%d"
-					data := fmt.Sprintf(format, accessToken, refreshToken, expiresIn)
-					w.Write([]byte(data))
-				}
+			Expect(token).ShouldNot(BeNil())
+			Expect(token.AccessToken).Should(Equal(accessToken))
+			Expect(token.RefreshToken).Should(Equal(refreshToken))
+			Expect(token.Expiry).Should(BeTemporally(">", time.Now()))
+			Expect(err).ShouldNot(HaveOccurred())
+		})
 
-				token, err := ga.Exchange("valid--authcode")
-				Expect(token).ShouldNot(BeNil())
-				Expect(token.AccessToken).Should(Equal(accessToken))
-				Expect(token.RefreshToken).Should(Equal(refreshToken))
-				Expect(token.Expiry).Should(BeTemporally(">", time.Now()))
-				Expect(err).ShouldNot(HaveOccurred())
+		It("should return error when wrong authcode", func() {
+			writeContent = func(w http.ResponseWriter) {
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 
-			By("wrong authcode")
-			{
-				writeContent = func(w http.ResponseWriter) {
-					w.WriteHeader(http.StatusInternalServerError)
-				}
-				_, err := ga.Exchange("wrong-authcode")
-				Expect(err).Should(HaveOccurred())
-			}
+			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
+			ga, _ := googleauth.New([]byte(cred))
+			_, err := ga.Exchange("wrong-authcode")
+			Expect(err).Should(HaveOccurred())
 		})
 	})
 
-	Context("refresh access token", func() {
-		It("should return new access token", func() {
-			var writeContent writeFunc
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	Context("refresh token", func() {
+		var writeContent writeFunc
+		var ts *httptest.Server
+
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				writeContent(w)
 			}))
-			defer ts.Close()
-			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
-			ga, _ := googleauth.New([]byte(cred))
+		})
 
-			By("valid token")
-			{
-				writeContent = func(w http.ResponseWriter) {
-					w.Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-					j := `{
+		AfterEach(func() {
+			ts.Close()
+		})
+
+		It("should succeed when valid refresh token", func() {
+			writeContent = func(w http.ResponseWriter) {
+				w.Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+				j := `{
 						"access_token": "access-token",
 						"expires_in": 3600
 					}`
-					w.Write([]byte(j))
-				}
-				token, err := ga.Refresh("refresh-token")
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(token.AccessToken).Should(Equal("access-token"))
-				Expect(token.RefreshToken).Should(Equal("refresh-token"))
-				Expect(token.Expiry).Should(BeTemporally(">", time.Now()))
+				w.Write([]byte(j))
 			}
+			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
+			ga, _ := googleauth.New([]byte(cred))
+			token, err := ga.Refresh("refresh-token")
 
-			By("non-ok status")
-			{
-				writeContent = func(w http.ResponseWriter) {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte("{}"))
-				}
-				_, err := ga.Refresh("refresh-token")
-				Expect(err).Should(HaveOccurred())
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(token.AccessToken).Should(Equal("access-token"))
+			Expect(token.RefreshToken).Should(Equal("refresh-token"))
+			Expect(token.Expiry).Should(BeTemporally(">", time.Now()))
+		})
+
+		It("should return error when http status code != OK", func() {
+			writeContent = func(w http.ResponseWriter) {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("{}"))
 			}
+			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
+			ga, _ := googleauth.New([]byte(cred))
+			_, err := ga.Refresh("refresh-token")
+			Expect(err).Should(HaveOccurred())
 		})
 	})
 
 	Context("revoke token", func() {
-		It("should revoke token successfully w/o error", func() {
-			var writeContent writeFunc
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var writeContent writeFunc
+		var ts *httptest.Server
+
+		BeforeEach(func() {
+			ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				writeContent(w)
 			}))
-			defer ts.Close()
+		})
+
+		AfterEach(func() {
+			ts.Close()
+		})
+
+		It("should succeed when valid token", func() {
+			writeContent = func(w http.ResponseWriter) {
+				w.WriteHeader(http.StatusOK)
+			}
 			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
 			ga, _ := googleauth.New([]byte(cred))
+			err := ga.Revoke("valid-token")
+			Expect(err).ShouldNot(HaveOccurred())
+		})
 
-			By("valid token")
-			{
-				writeContent = func(w http.ResponseWriter) {
-					w.WriteHeader(http.StatusOK)
-				}
-				err := ga.Revoke("valid-token")
-				Expect(err).ShouldNot(HaveOccurred())
+		It("should return error when wrong token", func() {
+			writeContent = func(w http.ResponseWriter) {
+				w.WriteHeader(http.StatusInternalServerError)
 			}
-
-			By("wrong token")
-			{
-				writeContent = func(w http.ResponseWriter) {
-					w.WriteHeader(http.StatusInternalServerError)
-				}
-				err := ga.Revoke("wrong-token")
-				Expect(err).Should(HaveOccurred())
-			}
+			cred := strings.Replace(credTemplate, "{token_url}", ts.URL, 1)
+			ga, _ := googleauth.New([]byte(cred))
+			err := ga.Revoke("wrong-token")
+			Expect(err).Should(HaveOccurred())
 		})
 	})
 })
