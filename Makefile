@@ -44,6 +44,7 @@ gen-mocks:
 	mockgen -destination=mocks/mock_auth.go -package=mocks $(PKG)/pkg/signin/auth Auth
 	mockgen -destination=mocks/mock_userinfo.go -package=mocks $(PKG)/pkg/signin/userinfo Userinfo
 	mockgen -destination=mocks/mock_notestore.go -package=mocks $(PKG)/pkg/storage/notestore Notestore
+	mockgen -destination=mocks/mock_sectionstore.go -package=mocks $(PKG)/pkg/storage/sectionstore Sectionstore
 
 run:
 	go run $(SERVER)

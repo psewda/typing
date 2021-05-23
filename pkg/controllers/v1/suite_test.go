@@ -14,13 +14,15 @@ import (
 )
 
 const (
-	urlRoute        = "/api/v1/signin/auth/url"
-	tokenRoute      = "/api/v1/signin/auth/token"
-	refreshRoute    = "/api/v1/signin/auth/refresh"
-	revokeRoute     = "/api/v1/signin/auth/revoke"
-	uiRoute         = "/api/v1/signin/userinfo"
-	notesRoute      = "/api/v1/storage/notes"
-	noteRouteWithID = "/api/v1/storage/notes/id"
+	urlRoute           = "/api/v1/signin/auth/url"
+	tokenRoute         = "/api/v1/signin/auth/token"
+	refreshRoute       = "/api/v1/signin/auth/refresh"
+	revokeRoute        = "/api/v1/signin/auth/revoke"
+	uiRoute            = "/api/v1/signin/userinfo"
+	notesRoute         = "/api/v1/storage/notes"
+	noteRouteWithID    = "/api/v1/storage/notes/id"
+	sectionsRoute      = "/api/v1/storage/notes/nid/sections"
+	sectionRouteWithID = "/api/v1/storage/notes/nid/sections/id"
 )
 
 var mockCtrl *gomock.Controller

@@ -20,6 +20,7 @@ import (
 	"github.com/psewda/typing/pkg/signin/auth/googleauth"
 	"github.com/psewda/typing/pkg/signin/userinfo/googleuserinfo"
 	"github.com/psewda/typing/pkg/storage/notestore/drvnotestore"
+	"github.com/psewda/typing/pkg/storage/sectionstore/drvsectionstore"
 )
 
 const (
@@ -100,16 +101,22 @@ func main() {
 		client := params[0].(*http.Client)
 		return drvnotestore.New(client)
 	}
+	ssfn := func(params ...interface{}) (interface{}, error) {
+		client := params[0].(*http.Client)
+		return drvsectionstore.New(client)
+	}
 	container := di.New()
 	container.Add(di.InstanceTypeAuth, aufn)
 	container.Add(di.InstanceTypeUserinfo, uifn)
 	container.Add(di.InstanceTypeNotestore, nsfn)
+	container.Add(di.InstanceTypeSectionstore, ssfn)
 
 	// register api controllers
 	server.RegisterController(controllers.NewVersionController())
 	server.RegisterController(ctrlv1.NewAuthController(container))
 	server.RegisterController(ctrlv1.NewUserinfoController(container))
 	server.RegisterController(ctrlv1.NewNotestoreController(container))
+	server.RegisterController(ctrlv1.NewSectionstoreController(container))
 
 	// run the api server
 	if err := server.Run(port); err != nil {

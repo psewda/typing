@@ -22,6 +22,9 @@ const (
 
 	// InstanceTypeNotestore is the enum member of type notestore.
 	InstanceTypeNotestore
+
+	// InstanceTypeSectionstore is the enum member of type sectionstore.
+	InstanceTypeSectionstore
 )
 
 // Container is the dependency injection container. It manages
