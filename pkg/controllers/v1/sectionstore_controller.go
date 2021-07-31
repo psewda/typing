@@ -6,14 +6,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/psewda/typing/internal/utils"
-	"github.com/psewda/typing/pkg/di"
+	"github.com/psewda/typing/pkg/ioc"
 	"github.com/psewda/typing/pkg/middlewares"
 	"github.com/psewda/typing/pkg/storage/sectionstore"
 )
 
 // SectionstoreController represents all operations on sectionstore endpoint.
 type SectionstoreController struct {
-	container di.Container
+	container ioc.Container
 }
 
 // AddRoutes configures all routes of sectionstore endpoint
@@ -21,26 +21,18 @@ type SectionstoreController struct {
 func (c *SectionstoreController) AddRoutes(e *echo.Echo) {
 	if e != nil {
 		a := middlewares.Authorization()
-		d := middlewares.Dependencies(c.container)
-		group := e.Group("/api/v1/storage/notes/:nid/sections", a, d)
-		group.POST(utils.Empty, CreateSection)
-		group.GET(utils.Empty, GetSections)
-		group.GET("/:id", GetSection)
-		group.PUT("/:id", UpdateSection)
-		group.DELETE("/:id", DeleteSection)
-	}
-}
-
-// NewSectionstoreController creates a new instance of sectionstore controller.
-func NewSectionstoreController(c di.Container) *SectionstoreController {
-	return &SectionstoreController{
-		container: c,
+		group := e.Group("/api/v1/storage/notes/:nid/sections", a)
+		group.POST(utils.Empty, c.CreateSection)
+		group.GET(utils.Empty, c.GetSections)
+		group.GET("/:id", c.GetSection)
+		group.PUT("/:id", c.UpdateSection)
+		group.DELETE("/:id", c.DeleteSection)
 	}
 }
 
 // CreateSection adds a new section in the note and returns to the client.
-func CreateSection(ctx echo.Context) error {
-	ss := getSectionstore(ctx)
+func (c *SectionstoreController) CreateSection(ctx echo.Context) error {
+	ss := c.getSectionstore(ctx)
 	nid := ctx.Param("nid")
 	s := new(sectionstore.WritableSection)
 
@@ -77,8 +69,8 @@ func CreateSection(ctx echo.Context) error {
 }
 
 // GetSections fetches all sections from the note and returns to the client.
-func GetSections(ctx echo.Context) error {
-	ss := getSectionstore(ctx)
+func (c *SectionstoreController) GetSections(ctx echo.Context) error {
+	ss := c.getSectionstore(ctx)
 	nid := ctx.Param("nid")
 
 	sections, err := ss.GetAll(nid)
@@ -92,8 +84,8 @@ func GetSections(ctx echo.Context) error {
 }
 
 // GetSection fetches the single section from the note and returns to the client.
-func GetSection(ctx echo.Context) error {
-	ss := getSectionstore(ctx)
+func (c *SectionstoreController) GetSection(ctx echo.Context) error {
+	ss := c.getSectionstore(ctx)
 	nid := ctx.Param("nid")
 	id := ctx.Param("id")
 
@@ -108,8 +100,8 @@ func GetSection(ctx echo.Context) error {
 }
 
 // UpdateSection modifies the section and saves it back in the note.
-func UpdateSection(ctx echo.Context) error {
-	ss := getSectionstore(ctx)
+func (c *SectionstoreController) UpdateSection(ctx echo.Context) error {
+	ss := c.getSectionstore(ctx)
 	nid := ctx.Param("nid")
 	id := ctx.Param("id")
 	s := new(sectionstore.WritableSection)
@@ -146,8 +138,8 @@ func UpdateSection(ctx echo.Context) error {
 }
 
 // DeleteSection removes the section from note.
-func DeleteSection(ctx echo.Context) error {
-	ss := getSectionstore(ctx)
+func (c *SectionstoreController) DeleteSection(ctx echo.Context) error {
+	ss := c.getSectionstore(ctx)
 	nid := ctx.Param("nid")
 	id := ctx.Param("id")
 
@@ -161,10 +153,16 @@ func DeleteSection(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func getSectionstore(ctx echo.Context) sectionstore.Sectionstore {
-	accessToken := ctx.Get(middlewares.KeyAccessToken).(string)
+// NewSectionstoreController creates a new instance of sectionstore controller.
+func NewSectionstoreController(c ioc.Container) *SectionstoreController {
+	return &SectionstoreController{
+		container: c,
+	}
+}
+
+func (c *SectionstoreController) getSectionstore(ctx echo.Context) sectionstore.Sectionstore {
+	accessToken := ctx.Get(middlewares.ContextKeyAccessToken).(string)
 	client := utils.ClientWithToken(accessToken)
-	container := ctx.Get(middlewares.KeyContainer).(di.Container)
-	instance, _ := container.GetInstance(di.InstanceTypeSectionstore, client)
+	instance, _ := c.container.GetInstance(ioc.InstanceTypeSectionstore, client)
 	return instance.(sectionstore.Sectionstore)
 }

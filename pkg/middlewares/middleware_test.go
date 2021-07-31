@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/psewda/typing/pkg/di"
 	"github.com/psewda/typing/pkg/middlewares"
 )
 
@@ -26,7 +25,7 @@ var _ = Describe("middleware", func() {
 			middleware := middlewares.Authorization()
 			handler := middleware(func(ctx echo.Context) error { return nil })
 			Expect(handler(ctx)).Should(Succeed())
-			Expect(ctx.Get(middlewares.KeyAccessToken)).ShouldNot(BeZero())
+			Expect(ctx.Get(middlewares.ContextKeyAccessToken)).ShouldNot(BeZero())
 		})
 
 		It("should throw error when empty token", func() {
@@ -49,17 +48,6 @@ var _ = Describe("middleware", func() {
 
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusUnauthorized))
-		})
-	})
-
-	Context("dependencies middleware", func() {
-		It("should inject container instance when right setup", func() {
-			ctx := newCtx()
-			container := di.New()
-			middleware := middlewares.Dependencies(container)
-			handler := middleware(func(ctx echo.Context) error { return nil })
-			Expect(handler(ctx)).Should(Succeed())
-			Expect(ctx.Get(middlewares.KeyContainer)).ShouldNot(BeNil())
 		})
 	})
 })

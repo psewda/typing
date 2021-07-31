@@ -45,9 +45,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Create(gomock.Any(), gomock.Any()).Return(section, nil)
 			req := newReq(`{"name": "section"}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			ctrlv1.CreateSection(ctx)
+			ctrlv1.NewSectionstoreController(mockContainer).CreateSection(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusCreated))
 
 			loc := rec.Header().Get(echo.HeaderLocation)
@@ -62,9 +62,9 @@ var _ = Describe("sectionstore controller", func() {
 		It("should return error when wrong input", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			req := newReq(`{"name": ""}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.CreateSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).CreateSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -74,9 +74,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
 			req := newReq(`{"name": "section"}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.CreateSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).CreateSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -98,9 +98,9 @@ var _ = Describe("sectionstore controller", func() {
 			}
 			mockSectionstore.EXPECT().GetAll(gomock.Any()).Return(sections, nil)
 			req := httptest.NewRequest(http.MethodGet, sectionsRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			ctrlv1.GetSections(ctx)
+			ctrlv1.NewSectionstoreController(mockContainer).GetSections(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var s []*sectionstore.Section
@@ -115,9 +115,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().GetAll(gomock.Any()).Return(nil, errors.New("error"))
 			req := httptest.NewRequest(http.MethodGet, sectionsRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.GetSections(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).GetSections(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -133,9 +133,9 @@ var _ = Describe("sectionstore controller", func() {
 			}
 			mockSectionstore.EXPECT().Get(gomock.Any(), gomock.Any()).Return(section, nil)
 			req := httptest.NewRequest(http.MethodGet, sectionRouteWithID, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			ctrlv1.GetSection(ctx)
+			ctrlv1.NewSectionstoreController(mockContainer).GetSection(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var s sectionstore.Section
@@ -148,9 +148,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
 			req := httptest.NewRequest(http.MethodGet, sectionRouteWithID, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.GetSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).GetSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -173,9 +173,9 @@ var _ = Describe("sectionstore controller", func() {
 			}
 			mockSectionstore.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(section, nil)
 			req := newReq(`{"name": "section"}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			ctrlv1.UpdateSection(ctx)
+			ctrlv1.NewSectionstoreController(mockContainer).UpdateSection(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var s sectionstore.Section
@@ -187,9 +187,9 @@ var _ = Describe("sectionstore controller", func() {
 		It("should return error when wrong input", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			req := newReq(`{"name": ""}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.UpdateSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).UpdateSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -199,9 +199,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
 			req := newReq(`{"name": "section"}`)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.UpdateSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).UpdateSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -213,8 +213,8 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			req := httptest.NewRequest(http.MethodDelete, sectionRouteWithID, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-			ctrlv1.DeleteSection(ctx)
+			ctx := newCtx(req, rec, withAccessToken())
+			ctrlv1.NewSectionstoreController(mockContainer).DeleteSection(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusNoContent))
 		})
 
@@ -222,9 +222,9 @@ var _ = Describe("sectionstore controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any(), gomock.Any()).Return(mockSectionstore, nil)
 			mockSectionstore.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("error"))
 			req := httptest.NewRequest(http.MethodDelete, sectionRouteWithID, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
+			ctx := newCtx(req, rec, withAccessToken())
 
-			err := ctrlv1.DeleteSection(ctx)
+			err := ctrlv1.NewSectionstoreController(mockContainer).DeleteSection(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))

@@ -6,14 +6,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/psewda/typing/internal/utils"
-	"github.com/psewda/typing/pkg/di"
+	"github.com/psewda/typing/pkg/ioc"
 	"github.com/psewda/typing/pkg/middlewares"
 	"github.com/psewda/typing/pkg/storage/notestore"
 )
 
 // NotestoreController represents all operations on notestore endpoint.
 type NotestoreController struct {
-	container di.Container
+	container ioc.Container
 }
 
 // AddRoutes configures all routes of notestore endpoint
@@ -21,26 +21,18 @@ type NotestoreController struct {
 func (c *NotestoreController) AddRoutes(e *echo.Echo) {
 	if e != nil {
 		a := middlewares.Authorization()
-		d := middlewares.Dependencies(c.container)
-		group := e.Group("/api/v1/storage/notes", a, d)
-		group.POST(utils.Empty, CreateNote)
-		group.GET(utils.Empty, GetNotes)
-		group.GET("/:id", GetNote)
-		group.PUT("/:id", UpdateNote)
-		group.DELETE("/:id", DeleteNote)
-	}
-}
-
-// NewNotestoreController creates a new instance of notestore controller.
-func NewNotestoreController(c di.Container) *NotestoreController {
-	return &NotestoreController{
-		container: c,
+		group := e.Group("/api/v1/storage/notes", a)
+		group.POST(utils.Empty, c.CreateNote)
+		group.GET(utils.Empty, c.GetNotes)
+		group.GET("/:id", c.GetNote)
+		group.PUT("/:id", c.UpdateNote)
+		group.DELETE("/:id", c.DeleteNote)
 	}
 }
 
 // CreateNote builds a new note and returns to the client.
-func CreateNote(ctx echo.Context) error {
-	ns := getNotestore(ctx)
+func (c *NotestoreController) CreateNote(ctx echo.Context) error {
+	ns := c.getNotestore(ctx)
 	n := new(notestore.WritableNote)
 
 	if err := ctx.Bind(n); err != nil {
@@ -75,8 +67,8 @@ func CreateNote(ctx echo.Context) error {
 }
 
 // GetNotes fetches all notes from the cloud storage and return to the client.
-func GetNotes(ctx echo.Context) error {
-	ns := getNotestore(ctx)
+func (c *NotestoreController) GetNotes(ctx echo.Context) error {
+	ns := c.getNotestore(ctx)
 
 	notes, err := ns.GetAll()
 	if err != nil {
@@ -89,8 +81,8 @@ func GetNotes(ctx echo.Context) error {
 }
 
 // GetNote fetches the single note from the cloud storage and return to the client.
-func GetNote(ctx echo.Context) error {
-	ns := getNotestore(ctx)
+func (c *NotestoreController) GetNote(ctx echo.Context) error {
+	ns := c.getNotestore(ctx)
 	id := ctx.Param("id")
 
 	note, err := ns.Get(id)
@@ -104,8 +96,8 @@ func GetNote(ctx echo.Context) error {
 }
 
 // UpdateNote modifies the note and saves back on cloud storage.
-func UpdateNote(ctx echo.Context) error {
-	ns := getNotestore(ctx)
+func (c *NotestoreController) UpdateNote(ctx echo.Context) error {
+	ns := c.getNotestore(ctx)
 	id := ctx.Param("id")
 	n := new(notestore.WritableNote)
 
@@ -141,8 +133,8 @@ func UpdateNote(ctx echo.Context) error {
 }
 
 // DeleteNote removes the note from cloud storage.
-func DeleteNote(ctx echo.Context) error {
-	ns := getNotestore(ctx)
+func (c *NotestoreController) DeleteNote(ctx echo.Context) error {
+	ns := c.getNotestore(ctx)
 	id := ctx.Param("id")
 
 	err := ns.Delete(id)
@@ -155,10 +147,16 @@ func DeleteNote(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func getNotestore(ctx echo.Context) notestore.Notestore {
-	accessToken := ctx.Get(middlewares.KeyAccessToken).(string)
+// NewNotestoreController creates a new instance of notestore controller.
+func NewNotestoreController(c ioc.Container) *NotestoreController {
+	return &NotestoreController{
+		container: c,
+	}
+}
+
+func (c *NotestoreController) getNotestore(ctx echo.Context) notestore.Notestore {
+	accessToken := ctx.Get(middlewares.ContextKeyAccessToken).(string)
 	client := utils.ClientWithToken(accessToken)
-	container := ctx.Get(middlewares.KeyContainer).(di.Container)
-	instance, _ := container.GetInstance(di.InstanceTypeNotestore, client)
+	instance, _ := c.container.GetInstance(ioc.InstanceTypeNotestore, client)
 	return instance.(notestore.Notestore)
 }

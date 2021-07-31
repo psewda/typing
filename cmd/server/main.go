@@ -14,7 +14,7 @@ import (
 	"github.com/psewda/typing/internal/utils"
 	"github.com/psewda/typing/pkg/controllers"
 	ctrlv1 "github.com/psewda/typing/pkg/controllers/v1"
-	"github.com/psewda/typing/pkg/di"
+	"github.com/psewda/typing/pkg/ioc"
 	"github.com/psewda/typing/pkg/log"
 	"github.com/psewda/typing/pkg/server"
 	"github.com/psewda/typing/pkg/signin/auth/googleauth"
@@ -89,27 +89,8 @@ func main() {
 	// create new api server
 	server := server.New(true, logger)
 
-	// setup handlers for creating new type instances
-	aufn := func(params ...interface{}) (interface{}, error) {
-		return googleauth.New(clientCred)
-	}
-	uifn := func(params ...interface{}) (interface{}, error) {
-		client := params[0].(*http.Client)
-		return googleuserinfo.New(client)
-	}
-	nsfn := func(params ...interface{}) (interface{}, error) {
-		client := params[0].(*http.Client)
-		return drvnotestore.New(client)
-	}
-	ssfn := func(params ...interface{}) (interface{}, error) {
-		client := params[0].(*http.Client)
-		return drvsectionstore.New(client)
-	}
-	container := di.New()
-	container.Add(di.InstanceTypeAuth, aufn)
-	container.Add(di.InstanceTypeUserinfo, uifn)
-	container.Add(di.InstanceTypeNotestore, nsfn)
-	container.Add(di.InstanceTypeSectionstore, ssfn)
+	// initialize ioc container
+	container := initIoC()
 
 	// register api controllers
 	server.RegisterController(controllers.NewVersionController())
@@ -167,4 +148,30 @@ func parseLogLevel(level string) (log.LevelType, bool) {
 	default:
 		return 255, false
 	}
+}
+
+func initIoC() *ioc.DefaultContainer {
+	aufn := func(params ...interface{}) (interface{}, error) {
+		return googleauth.New(clientCred)
+	}
+	uifn := func(params ...interface{}) (interface{}, error) {
+		client := params[0].(*http.Client)
+		return googleuserinfo.New(client)
+	}
+	nsfn := func(params ...interface{}) (interface{}, error) {
+		client := params[0].(*http.Client)
+		return drvnotestore.New(client)
+	}
+	ssfn := func(params ...interface{}) (interface{}, error) {
+		client := params[0].(*http.Client)
+		return drvsectionstore.New(client)
+	}
+
+	container := ioc.New()
+	container.Add(ioc.InstanceTypeAuth, aufn)
+	container.Add(ioc.InstanceTypeUserinfo, uifn)
+	container.Add(ioc.InstanceTypeNotestore, nsfn)
+	container.Add(ioc.InstanceTypeSectionstore, ssfn)
+
+	return container
 }

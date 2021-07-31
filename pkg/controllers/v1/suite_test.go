@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/psewda/typing/pkg/di"
 	"github.com/psewda/typing/pkg/middlewares"
 )
 
@@ -54,16 +53,9 @@ func newCtx(r *http.Request, w http.ResponseWriter, objs ...keyValue) echo.Conte
 	return ctx
 }
 
-func withContainer(v di.Container) keyValue {
-	return keyValue{
-		key:   middlewares.KeyContainer,
-		value: v,
-	}
-}
-
 func withAccessToken() keyValue {
 	return keyValue{
-		key:   middlewares.KeyAccessToken,
+		key:   middlewares.ContextKeyAccessToken,
 		value: "access-token",
 	}
 }

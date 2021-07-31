@@ -6,16 +6,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/psewda/typing/internal/utils"
-	"github.com/psewda/typing/pkg/di"
 )
 
-const (
-	// KeyContainer is the key for container object.
-	KeyContainer = "#container"
-
-	// KeyAccessToken is the key for access token value.
-	KeyAccessToken = "#accesstoken"
-)
+// ContextKeyAccessToken is the key for access token value.
+// nolint:gosec
+const ContextKeyAccessToken = "CTX_KEY_ACCESS_TOKEN"
 
 // Authorization middleware authorizes http request by validating
 // bearer token in authorization header. If validation is
@@ -42,17 +37,7 @@ func Authorization() echo.MiddlewareFunc {
 				}
 			}
 
-			ctx.Set(KeyAccessToken, t)
-			return next(ctx)
-		}
-	}
-}
-
-// Dependencies middleware inserts the container in the echo ontext.
-func Dependencies(c di.Container) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
-			ctx.Set(KeyContainer, c)
+			ctx.Set(ContextKeyAccessToken, t)
 			return next(ctx)
 		}
 	}

@@ -29,8 +29,8 @@ var _ = Describe("userinfo controller", func() {
 			}
 			mockUserinfo.EXPECT().Get().Return(user, nil)
 			req := httptest.NewRequest(http.MethodGet, uiRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-			ctrlv1.GetUser(ctx)
+			ctx := newCtx(req, rec, withAccessToken())
+			ctrlv1.NewUserinfoController(mockContainer).GetUser(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var u userinfo.User
@@ -48,8 +48,8 @@ var _ = Describe("userinfo controller", func() {
 			mockUserinfo.EXPECT().Get().Return(nil, errors.New("error"))
 
 			req := httptest.NewRequest(http.MethodGet, uiRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer), withAccessToken())
-			err := ctrlv1.GetUser(ctx)
+			ctx := newCtx(req, rec, withAccessToken())
+			err := ctrlv1.NewUserinfoController(mockContainer).GetUser(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))

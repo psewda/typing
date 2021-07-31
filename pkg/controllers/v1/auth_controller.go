@@ -5,40 +5,31 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/psewda/typing/internal/utils"
-	"github.com/psewda/typing/pkg/di"
-	"github.com/psewda/typing/pkg/middlewares"
+	"github.com/psewda/typing/pkg/ioc"
 	"github.com/psewda/typing/pkg/signin/auth"
 	"github.com/psewda/typing/pkg/types"
 )
 
 // AuthController represents all operations on auth endpoint.
 type AuthController struct {
-	container di.Container
+	container ioc.Container
 }
 
 // AddRoutes configures all routes of auth endpoint
 // in the 'echo' server runtime.
 func (c *AuthController) AddRoutes(e *echo.Echo) {
 	if e != nil {
-		d := middlewares.Dependencies(c.container)
-		group := e.Group("/api/v1/signin/auth", d)
-		group.GET("/url", GetURL)
-		group.POST("/token", Exchange)
-		group.POST("/refresh", Refresh)
-		group.POST("/revoke", Revoke)
-	}
-}
-
-// NewAuthController creates a new instance of auth controller.
-func NewAuthController(c di.Container) *AuthController {
-	return &AuthController{
-		container: c,
+		group := e.Group("/api/v1/signin/auth")
+		group.GET("/url", c.GetURL)
+		group.POST("/token", c.Exchange)
+		group.POST("/refresh", c.Refresh)
+		group.POST("/revoke", c.Revoke)
 	}
 }
 
 // GetURL returns the authorization workflow url to the client.
-func GetURL(ctx echo.Context) error {
-	auth := getAuth(ctx)
+func (c *AuthController) GetURL(ctx echo.Context) error {
+	auth := c.getAuth()
 	redirect := ctx.QueryParam("redirect")
 	state := ctx.QueryParam("state")
 
@@ -61,8 +52,8 @@ func GetURL(ctx echo.Context) error {
 
 // Exchange converts the authorization code into token and
 // returns it to the client.
-func Exchange(ctx echo.Context) error {
-	auth := getAuth(ctx)
+func (c *AuthController) Exchange(ctx echo.Context) error {
+	auth := c.getAuth()
 	code := ctx.FormValue("auth_code")
 	if len(code) == 0 {
 		msg := "authorization code is empty"
@@ -87,8 +78,8 @@ func Exchange(ctx echo.Context) error {
 }
 
 // Refresh renews access token using refresh token.
-func Refresh(ctx echo.Context) error {
-	auth := getAuth(ctx)
+func (c *AuthController) Refresh(ctx echo.Context) error {
+	auth := c.getAuth()
 	refreshToken := ctx.FormValue("refresh_token")
 	if len(refreshToken) == 0 {
 		msg := "refresh token is empty"
@@ -114,8 +105,8 @@ func Refresh(ctx echo.Context) error {
 
 // Revoke resets the authorization workflow. After calling revoke, the
 // user needs to start authorization workflow again.
-func Revoke(ctx echo.Context) error {
-	auth := getAuth(ctx)
+func (c *AuthController) Revoke(ctx echo.Context) error {
+	auth := c.getAuth()
 	token := ctx.FormValue("token")
 	if len(token) == 0 {
 		msg := "token value is empty"
@@ -139,9 +130,14 @@ func Revoke(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func getAuth(ctx echo.Context) auth.Auth {
-	container := ctx.Get(middlewares.KeyContainer).(di.Container)
-	instance, _ := container.GetInstance(di.InstanceTypeAuth)
-	return instance.(auth.Auth)
+// NewAuthController creates a new instance of auth controller.
+func NewAuthController(c ioc.Container) *AuthController {
+	return &AuthController{
+		container: c,
+	}
+}
 
+func (c *AuthController) getAuth() auth.Auth {
+	instance, _ := c.container.GetInstance(ioc.InstanceTypeAuth)
+	return instance.(auth.Auth)
 }

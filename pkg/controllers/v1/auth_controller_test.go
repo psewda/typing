@@ -38,9 +38,9 @@ var _ = Describe("auth controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
 			mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL)
 			req := httptest.NewRequest(http.MethodGet, urlRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			ctrlv1.GetURL(ctx)
+			ctrlv1.NewAuthController(mockContainer).GetURL(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var urlValue types.URLValue
@@ -54,9 +54,9 @@ var _ = Describe("auth controller", func() {
 			mockAuth.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(returnURL)
 			u := fmt.Sprintf("%s?redirect=http://localhost:7070/redirect", urlRoute)
 			req := httptest.NewRequest(http.MethodGet, u, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			ctrlv1.GetURL(ctx)
+			ctrlv1.NewAuthController(mockContainer).GetURL(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var urlValue types.URLValue
@@ -69,9 +69,9 @@ var _ = Describe("auth controller", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
 			u := fmt.Sprintf("%s?redirect=invalid-url", urlRoute)
 			req := httptest.NewRequest(http.MethodGet, u, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.GetURL(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).GetURL(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -91,9 +91,9 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("auth_code", "valid-authcode")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			ctrlv1.Exchange(ctx)
+			ctrlv1.NewAuthController(mockContainer).Exchange(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var t auth.Token
@@ -107,9 +107,9 @@ var _ = Describe("auth controller", func() {
 		It("should return error when empty authcode", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
 			req := httptest.NewRequest(http.MethodPost, tokenRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Exchange(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Exchange(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -122,9 +122,9 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("auth_code", "valid-authcode")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Exchange(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Exchange(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -144,9 +144,9 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("refresh_token", "valid-token")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			ctrlv1.Refresh(ctx)
+			ctrlv1.NewAuthController(mockContainer).Refresh(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusOK))
 
 			var t auth.Token
@@ -160,9 +160,9 @@ var _ = Describe("auth controller", func() {
 		It("should return error when empty token", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
 			req := httptest.NewRequest(http.MethodPost, refreshRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Refresh(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Refresh(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -175,9 +175,9 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("refresh_token", "valid-token")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Refresh(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Refresh(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
@@ -192,18 +192,18 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("token", "valid-token")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			ctrlv1.Revoke(ctx)
+			ctrlv1.NewAuthController(mockContainer).Revoke(ctx)
 			Expect(rec.Code).Should(Equal(http.StatusNoContent))
 		})
 
 		It("should return error when empty token", func() {
 			mockContainer.EXPECT().GetInstance(gomock.Any()).Return(mockAuth, nil)
 			req := httptest.NewRequest(http.MethodPost, revokeRoute, nil)
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Revoke(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Revoke(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusBadRequest))
@@ -216,9 +216,9 @@ var _ = Describe("auth controller", func() {
 			form := url.Values{}
 			form.Add("token", "valid-token")
 			req.PostForm = form
-			ctx := newCtx(req, rec, withContainer(mockContainer))
+			ctx := newCtx(req, rec)
 
-			err := ctrlv1.Revoke(ctx)
+			err := ctrlv1.NewAuthController(mockContainer).Revoke(ctx)
 			httpError := toHTTPError(err)
 			Expect(httpError).Should(HaveOccurred())
 			Expect(httpError.Code).Should(Equal(http.StatusInternalServerError))
